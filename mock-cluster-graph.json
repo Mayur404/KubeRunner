@@ -1,0 +1,703 @@
+{
+    "metadata": {
+        "cluster_name": "prod-cluster-01",
+        "scan_timestamp": "2026-03-09T21:00:00Z",
+        "version": "1.0",
+        "description": "Synthetic Kubernetes cluster with 6 pre-planted attack paths for security analysis"
+    },
+    "nodes": [
+        {
+            "id": "public-internet",
+            "type": "Internet",
+            "name": "public-internet",
+            "namespace": "external",
+            "risk_score": 0.0,
+            "labels": {
+                "zone": "public"
+            },
+            "description": "Public internet entry point"
+        },
+        {
+            "id": "ingress-nginx",
+            "type": "Pod",
+            "name": "ingress-nginx-controller",
+            "namespace": "ingress-nginx",
+            "risk_score": 9.8,
+            "cve": "CVE-2023-5044",
+            "labels": {
+                "app": "ingress-nginx",
+                "component": "controller"
+            },
+            "description": "Nginx ingress controller with known RCE vulnerability (CVE-2023-5044)"
+        },
+        {
+            "id": "webapp-pod",
+            "type": "Pod",
+            "name": "webapp-front",
+            "namespace": "default",
+            "risk_score": 7.5,
+            "cve": "CVE-2021-44228",
+            "labels": {
+                "app": "webapp",
+                "tier": "frontend"
+            },
+            "description": "Frontend web application pod vulnerable to Log4Shell (CVE-2021-44228)"
+        },
+        {
+            "id": "webapp-sa",
+            "type": "ServiceAccount",
+            "name": "webapp-sa",
+            "namespace": "default",
+            "risk_score": 0.0,
+            "labels": {
+                "app": "webapp"
+            },
+            "description": "Service account used by the frontend webapp"
+        },
+        {
+            "id": "role-secret-reader",
+            "type": "Role",
+            "name": "secret-reader",
+            "namespace": "default",
+            "risk_score": 0.0,
+            "labels": {},
+            "description": "Role granting read access to all secrets in default namespace"
+        },
+        {
+            "id": "db-secret",
+            "type": "Secret",
+            "name": "db-credentials",
+            "namespace": "default",
+            "risk_score": 0.0,
+            "labels": {
+                "tier": "sensitive"
+            },
+            "description": "Kubernetes Secret containing production DB credentials"
+        },
+        {
+            "id": "production-db",
+            "type": "Database",
+            "name": "production-db",
+            "namespace": "data-tier",
+            "risk_score": 10.0,
+            "labels": {
+                "tier": "crown-jewel",
+                "env": "production"
+            },
+            "description": "Production PostgreSQL database — Crown Jewel",
+            "is_crown_jewel": true
+        },
+        {
+            "id": "dev-user",
+            "type": "User",
+            "name": "dev-1",
+            "namespace": "iam",
+            "risk_score": 0.0,
+            "labels": {
+                "team": "engineering"
+            },
+            "description": "Developer user with overly broad exec permissions"
+        },
+        {
+            "id": "dev-pod",
+            "type": "Pod",
+            "name": "dev-tools-pod",
+            "namespace": "dev",
+            "risk_score": 8.1,
+            "cve": "CVE-2024-1234",
+            "labels": {
+                "app": "dev-tools",
+                "env": "dev"
+            },
+            "description": "Developer tooling pod with a critical unpatched CVE (CVE-2024-1234)"
+        },
+        {
+            "id": "service-a-sa",
+            "type": "ServiceAccount",
+            "name": "service-a-sa",
+            "namespace": "services",
+            "risk_score": 0.0,
+            "labels": {
+                "app": "service-a"
+            },
+            "description": "Service account for Service A — part of circular permission loop"
+        },
+        {
+            "id": "service-b-sa",
+            "type": "ServiceAccount",
+            "name": "service-b-sa",
+            "namespace": "services",
+            "risk_score": 0.0,
+            "labels": {
+                "app": "service-b"
+            },
+            "description": "Service account for Service B — part of circular permission loop"
+        },
+        {
+            "id": "service-a-role",
+            "type": "Role",
+            "name": "service-a-admin",
+            "namespace": "services",
+            "risk_score": 0.0,
+            "labels": {},
+            "description": "Role granting admin access for Service A — part of circular grant loop"
+        },
+        {
+            "id": "service-b-role",
+            "type": "Role",
+            "name": "service-b-admin",
+            "namespace": "services",
+            "risk_score": 0.0,
+            "labels": {},
+            "description": "Role granting admin access for Service B — part of circular grant loop"
+        },
+        {
+            "id": "admin-sa",
+            "type": "ServiceAccount",
+            "name": "cluster-admin-sa",
+            "namespace": "kube-system",
+            "risk_score": 9.5,
+            "labels": {
+                "component": "controller"
+            },
+            "description": "Cluster-admin service account — has unrestricted access to everything"
+        },
+        {
+            "id": "cluster-admin-role",
+            "type": "ClusterRole",
+            "name": "cluster-admin",
+            "namespace": "cluster-wide",
+            "risk_score": 0.0,
+            "labels": {},
+            "description": "Built-in cluster-admin ClusterRole with full cluster permissions"
+        },
+        {
+            "id": "api-server",
+            "type": "Pod",
+            "name": "kube-apiserver",
+            "namespace": "kube-system",
+            "risk_score": 9.0,
+            "labels": {
+                "component": "kube-apiserver"
+            },
+            "description": "Kubernetes API server — controls all cluster operations"
+        },
+        {
+            "id": "etcd-pod",
+            "type": "Pod",
+            "name": "etcd",
+            "namespace": "kube-system",
+            "risk_score": 9.8,
+            "cve": "CVE-2023-48795",
+            "labels": {
+                "component": "etcd"
+            },
+            "description": "Etcd cluster store with Terrapin SSH vulnerability — Crown Jewel",
+            "is_crown_jewel": true
+        },
+        {
+            "id": "ci-pod",
+            "type": "Pod",
+            "name": "ci-runner",
+            "namespace": "ci-cd",
+            "risk_score": 7.2,
+            "cve": "CVE-2022-23648",
+            "labels": {
+                "app": "gitlab-runner",
+                "env": "ci"
+            },
+            "description": "GitLab CI runner pod with container escape vulnerability (CVE-2022-23648)"
+        },
+        {
+            "id": "ci-sa",
+            "type": "ServiceAccount",
+            "name": "ci-deployer-sa",
+            "namespace": "ci-cd",
+            "risk_score": 0.0,
+            "labels": {
+                "app": "gitlab-runner"
+            },
+            "description": "Service account used by the CI pipeline with excessive deploy permissions"
+        },
+        {
+            "id": "deploy-role",
+            "type": "ClusterRole",
+            "name": "deployer-cluster-role",
+            "namespace": "cluster-wide",
+            "risk_score": 0.0,
+            "labels": {},
+            "description": "ClusterRole granting deployment write access across all namespaces"
+        },
+        {
+            "id": "config-secret",
+            "type": "Secret",
+            "name": "app-config-secrets",
+            "namespace": "ci-cd",
+            "risk_score": 0.0,
+            "labels": {
+                "tier": "sensitive"
+            },
+            "description": "CI/CD pipeline secrets containing deploy tokens and registry credentials"
+        },
+        {
+            "id": "registry-sa",
+            "type": "ServiceAccount",
+            "name": "registry-puller-sa",
+            "namespace": "default",
+            "risk_score": 0.0,
+            "labels": {
+                "component": "registry"
+            },
+            "description": "Service account for image registry pulling with overly broad permissions"
+        },
+        {
+            "id": "audit-pod",
+            "type": "Pod",
+            "name": "audit-sidecar",
+            "namespace": "monitoring",
+            "risk_score": 5.5,
+            "labels": {
+                "app": "audit",
+                "tier": "monitoring"
+            },
+            "description": "Audit sidecar pod with shared host network access"
+        },
+        {
+            "id": "monitoring-sa",
+            "type": "ServiceAccount",
+            "name": "prometheus-sa",
+            "namespace": "monitoring",
+            "risk_score": 0.0,
+            "labels": {
+                "app": "prometheus"
+            },
+            "description": "Prometheus monitoring service account with cluster-wide read access"
+        },
+        {
+            "id": "monitoring-role",
+            "type": "ClusterRole",
+            "name": "prometheus-cluster-reader",
+            "namespace": "cluster-wide",
+            "risk_score": 0.0,
+            "labels": {},
+            "description": "ClusterRole granting read access to all resources for monitoring"
+        },
+        {
+            "id": "node-exporter-pod",
+            "type": "Pod",
+            "name": "node-exporter",
+            "namespace": "monitoring",
+            "risk_score": 6.1,
+            "cve": "CVE-2022-21698",
+            "labels": {
+                "app": "node-exporter"
+            },
+            "description": "Node exporter pod with host path mount — potential for node-level access"
+        },
+        {
+            "id": "hostpath-secret",
+            "type": "Secret",
+            "name": "node-credentials",
+            "namespace": "monitoring",
+            "risk_score": 0.0,
+            "labels": {
+                "tier": "sensitive"
+            },
+            "description": "Node SSH key secret accessed by node-exporter"
+        },
+        {
+            "id": "loadbalancer-svc",
+            "type": "Service",
+            "name": "frontend-loadbalancer",
+            "namespace": "default",
+            "risk_score": 0.0,
+            "labels": {
+                "tier": "public"
+            },
+            "description": "Public-facing LoadBalancer service routing to webapp-pod"
+        },
+        {
+            "id": "configmap-app",
+            "type": "ConfigMap",
+            "name": "app-config",
+            "namespace": "default",
+            "risk_score": 0.0,
+            "labels": {
+                "app": "webapp"
+            },
+            "description": "Application ConfigMap containing connection strings and feature flags"
+        },
+        {
+            "id": "role-configmap-writer",
+            "type": "Role",
+            "name": "configmap-writer",
+            "namespace": "default",
+            "risk_score": 0.0,
+            "labels": {},
+            "description": "Role granting write access to ConfigMaps — potential for config poisoning"
+        },
+        {
+            "id": "attacker-pod",
+            "type": "Pod",
+            "name": "compromised-sidecar",
+            "namespace": "default",
+            "risk_score": 8.8,
+            "cve": "CVE-2024-5321",
+            "labels": {
+                "app": "sidecar"
+            },
+            "description": "Compromised sidecar container with a critical SSRF + code exec vulnerability"
+        },
+        {
+            "id": "payments-pod",
+            "type": "Pod",
+            "name": "payments-service",
+            "namespace": "payments",
+            "risk_score": 7.8,
+            "labels": {
+                "app": "payments",
+                "tier": "crown-jewel"
+            },
+            "description": "Payments microservice handling PCI data — Crown Jewel"
+        },
+        {
+            "id": "payments-sa",
+            "type": "ServiceAccount",
+            "name": "payments-sa",
+            "namespace": "payments",
+            "risk_score": 0.0,
+            "labels": {
+                "app": "payments"
+            },
+            "description": "Service account for payments pod with access to payment secrets"
+        },
+        {
+            "id": "payments-secret",
+            "type": "Secret",
+            "name": "payment-gateway-keys",
+            "namespace": "payments",
+            "risk_score": 0.0,
+            "labels": {
+                "tier": "sensitive",
+                "compliance": "PCI"
+            },
+            "description": "PCI-compliant payment gateway API keys — Crown Jewel secret"
+        },
+        {
+            "id": "role-payments-reader",
+            "type": "Role",
+            "name": "payments-secret-reader",
+            "namespace": "payments",
+            "risk_score": 0.0,
+            "labels": {},
+            "description": "Role granting read access to payment secrets namespace"
+        },
+        {
+            "id": "admin-configmap",
+            "type": "ConfigMap",
+            "name": "admin-bootstrap-config",
+            "namespace": "kube-system",
+            "risk_score": 5.0,
+            "labels": {
+                "component": "bootstrap"
+            },
+            "description": "kube-system bootstrap ConfigMap with internal cluster discovery info"
+        },
+        {
+            "id": "jump-pod",
+            "type": "Pod",
+            "name": "jump-server-pod",
+            "namespace": "infra",
+            "risk_score": 6.5,
+            "labels": {
+                "app": "jump-server"
+            },
+            "description": "Internal jump server pod with privileged network access to all namespaces"
+        },
+        {
+            "id": "infra-sa",
+            "type": "ServiceAccount",
+            "name": "infra-ops-sa",
+            "namespace": "infra",
+            "risk_score": 0.0,
+            "labels": {
+                "team": "infra"
+            },
+            "description": "Infra operations service account with node management permissions"
+        },
+        {
+            "id": "node-manager-role",
+            "type": "ClusterRole",
+            "name": "node-manager",
+            "namespace": "cluster-wide",
+            "risk_score": 0.0,
+            "labels": {},
+            "description": "ClusterRole granting node management capabilities including privileged exec"
+        },
+        {
+            "id": "backup-secret",
+            "type": "Secret",
+            "name": "backup-store-credentials",
+            "namespace": "infra",
+            "risk_score": 0.0,
+            "labels": {
+                "tier": "sensitive"
+            },
+            "description": "S3/GCS backup credentials providing access to all database dumps"
+        }
+    ],
+    "edges": [
+        {
+            "source": "public-internet",
+            "target": "loadbalancer-svc",
+            "relationship": "routes-traffic-to",
+            "weight": 1.0
+        },
+        {
+            "source": "loadbalancer-svc",
+            "target": "ingress-nginx",
+            "relationship": "routes-traffic-to",
+            "weight": 1.0
+        },
+        {
+            "source": "ingress-nginx",
+            "target": "webapp-pod",
+            "relationship": "routes-traffic-to",
+            "weight": 9.8
+        },
+        {
+            "source": "webapp-pod",
+            "target": "webapp-sa",
+            "relationship": "uses-service-account",
+            "weight": 7.5
+        },
+        {
+            "source": "webapp-sa",
+            "target": "role-secret-reader",
+            "relationship": "bound-to",
+            "weight": 1.0
+        },
+        {
+            "source": "role-secret-reader",
+            "target": "db-secret",
+            "relationship": "can-read",
+            "weight": 1.0
+        },
+        {
+            "source": "db-secret",
+            "target": "production-db",
+            "relationship": "authenticates-to",
+            "weight": 10.0
+        },
+        {
+            "source": "dev-user",
+            "target": "dev-pod",
+            "relationship": "can-exec",
+            "weight": 1.0
+        },
+        {
+            "source": "dev-pod",
+            "target": "webapp-sa",
+            "relationship": "can-impersonate",
+            "weight": 8.1
+        },
+        {
+            "source": "service-a-sa",
+            "target": "service-b-role",
+            "relationship": "bound-to",
+            "weight": 5.0
+        },
+        {
+            "source": "service-b-sa",
+            "target": "service-a-role",
+            "relationship": "bound-to",
+            "weight": 5.0
+        },
+        {
+            "source": "service-b-role",
+            "target": "service-b-sa",
+            "relationship": "grants-admin-to",
+            "weight": 1.0
+        },
+        {
+            "source": "service-a-role",
+            "target": "service-a-sa",
+            "relationship": "grants-admin-to",
+            "weight": 1.0
+        },
+        {
+            "source": "ci-pod",
+            "target": "ci-sa",
+            "relationship": "uses-service-account",
+            "weight": 7.2
+        },
+        {
+            "source": "ci-sa",
+            "target": "deploy-role",
+            "relationship": "bound-to",
+            "weight": 1.0
+        },
+        {
+            "source": "deploy-role",
+            "target": "config-secret",
+            "relationship": "can-read",
+            "weight": 1.0
+        },
+        {
+            "source": "public-internet",
+            "target": "ci-pod",
+            "relationship": "routes-traffic-to",
+            "weight": 7.2
+        },
+        {
+            "source": "ci-sa",
+            "target": "admin-sa",
+            "relationship": "can-impersonate",
+            "weight": 9.0
+        },
+        {
+            "source": "admin-sa",
+            "target": "cluster-admin-role",
+            "relationship": "bound-to",
+            "weight": 1.0
+        },
+        {
+            "source": "cluster-admin-role",
+            "target": "api-server",
+            "relationship": "grants-full-access-to",
+            "weight": 1.0
+        },
+        {
+            "source": "api-server",
+            "target": "etcd-pod",
+            "relationship": "stores-state-in",
+            "weight": 9.0
+        },
+        {
+            "source": "api-server",
+            "target": "production-db",
+            "relationship": "can-configure",
+            "weight": 5.0
+        },
+        {
+            "source": "monitoring-sa",
+            "target": "monitoring-role",
+            "relationship": "bound-to",
+            "weight": 1.0
+        },
+        {
+            "source": "monitoring-role",
+            "target": "api-server",
+            "relationship": "can-read",
+            "weight": 1.0
+        },
+        {
+            "source": "audit-pod",
+            "target": "monitoring-sa",
+            "relationship": "uses-service-account",
+            "weight": 5.5
+        },
+        {
+            "source": "node-exporter-pod",
+            "target": "hostpath-secret",
+            "relationship": "mounts-hostpath",
+            "weight": 6.1
+        },
+        {
+            "source": "hostpath-secret",
+            "target": "etcd-pod",
+            "relationship": "authenticates-to",
+            "weight": 9.8
+        },
+        {
+            "source": "attacker-pod",
+            "target": "webapp-sa",
+            "relationship": "can-impersonate",
+            "weight": 8.8
+        },
+        {
+            "source": "webapp-sa",
+            "target": "role-configmap-writer",
+            "relationship": "bound-to",
+            "weight": 1.0
+        },
+        {
+            "source": "role-configmap-writer",
+            "target": "configmap-app",
+            "relationship": "can-write",
+            "weight": 1.0
+        },
+        {
+            "source": "attacker-pod",
+            "target": "payments-sa",
+            "relationship": "can-impersonate",
+            "weight": 8.8
+        },
+        {
+            "source": "payments-sa",
+            "target": "role-payments-reader",
+            "relationship": "bound-to",
+            "weight": 1.0
+        },
+        {
+            "source": "role-payments-reader",
+            "target": "payments-secret",
+            "relationship": "can-read",
+            "weight": 1.0
+        },
+        {
+            "source": "payments-secret",
+            "target": "payments-pod",
+            "relationship": "authenticates-to",
+            "weight": 7.8
+        },
+        {
+            "source": "jump-pod",
+            "target": "infra-sa",
+            "relationship": "uses-service-account",
+            "weight": 6.5
+        },
+        {
+            "source": "infra-sa",
+            "target": "node-manager-role",
+            "relationship": "bound-to",
+            "weight": 1.0
+        },
+        {
+            "source": "node-manager-role",
+            "target": "api-server",
+            "relationship": "can-exec-on-nodes",
+            "weight": 1.0
+        },
+        {
+            "source": "infra-sa",
+            "target": "backup-secret",
+            "relationship": "can-read",
+            "weight": 1.0
+        },
+        {
+            "source": "backup-secret",
+            "target": "production-db",
+            "relationship": "accesses-backup-of",
+            "weight": 9.0
+        },
+        {
+            "source": "public-internet",
+            "target": "jump-pod",
+            "relationship": "routes-traffic-to",
+            "weight": 6.5
+        },
+        {
+            "source": "registry-sa",
+            "target": "config-secret",
+            "relationship": "can-read",
+            "weight": 1.0
+        },
+        {
+            "source": "webapp-pod",
+            "target": "registry-sa",
+            "relationship": "uses-service-account",
+            "weight": 1.0
+        }
+    ]
+}

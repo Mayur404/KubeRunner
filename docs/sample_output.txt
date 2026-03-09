@@ -1,0 +1,316 @@
+﻿
+  _  __  ___     _   _   _             _      ____       _   _
+ | |/ / ( _ )   / \ | |_| |_ __ _  ___| | __ |  _ \ __ _| |_| |__
+ | ' /  / _ \  / _ \| __| __/ _` |/ __| |/ / | |_) / _` | __| '_ \
+ | . \ | (_) |/ ___ \ |_| || (_| | (__|   <  |  __/ (_| | |_| | | |
+ |_|\_\ \___//_/   \_\__|\__\__,_|\___|_|\_\ |_|   \__,_|\__|_| |_|
+
+  Kubernetes Attack Path Visualizer  v2.0
+  Graph-Based Security Analysis for Cloud-Native Infrastructure
+  Algorithms: BFS | Dijkstra | DFS | Centrality | PageRank
+  Framework:  MITRE ATT&CK for Containers
+
+[1/4] Loading cluster state...
+    [+] Loaded 40 nodes and 42 edges from 'mock-cluster-graph.json'.
+[2/4] Building DAG...
+      Cluster     : prod-cluster-01
+      Nodes       : 40
+      Edges       : 42
+      Is DAG      : No (cycles present)
+      Crown Jewels: db-secret, production-db, etcd-pod, config-secret, hostpath-secret, payments-secret, backup-secret
+      Entry Points: public-internet, loadbalancer-svc
+[3/4] Running security algorithms...
+[4/4] Generating Kill Chain Report...
+
+========================================================================
+  KUBERNETES SECURITY  -  KILL CHAIN REPORT
+  Generated: 2026-03-10 00:20:09
+========================================================================
+
+[GRAPH STATISTICS]
+  Nodes: 40   Edges: 42   DAG: No (cycles)
+  Types: ClusterRole: 4, ConfigMap: 2, Database: 1, Internet: 1, Pod: 11, Role: 5, Secret: 5, Service: 1, ServiceAccount: 9, User: 1
+
+------------------------------------------------------------------------
+
+[SECTION 1] ATTACK PATH ANALYSIS  (Dijkstra's Algorithm)
+------------------------------------------------------------------------
+
+  !!! WARNING: Attack Path Detected
+  User 'Internet:public-internet' can reach 'Database:production-db' via:
+     Internet:public-internet
+     -> Pod:jump-server-pod
+     -> ServiceAccount:infra-ops-sa
+     -> ClusterRole:node-manager
+     -> Pod:kube-apiserver
+     -> Database:production-db
+
+  Total Hops: 5 | Path Risk Score: 45.5 (CRITICAL)
+  Alternate attack paths: 3
+    [Path #2] Risk=45.5  Internet:public-internet -> Pod:jump-server-pod -> ServiceAccount:infra-ops-sa -> ClusterRole:node-manager -> Pod:kube-apiserver -> Database:production-db
+    [Path #3] Risk=61.1  Internet:public-internet -> Service:frontend-loadbalancer -> Pod:ingress-nginx-controller -> Pod:webapp-front -> ServiceAccount:webapp-sa -> Role:secret-reader -> Secret:db-credentials -> Database:production-db
+
+------------------------------------------------------------------------
+
+[SECTION 2] BLAST RADIUS ANALYSIS  (Breadth-First Search)
+------------------------------------------------------------------------
+  Blast Radius of Pod:dev-tools-pod: 5 resources within 3 hops
+
+  Hop 1 (1 nodes):
+    - ServiceAccount:webapp-sa
+  Hop 2 (2 nodes):
+    - Role:secret-reader
+    - Role:configmap-writer
+  Hop 3 (2 nodes):
+    - Secret:db-credentials
+    - ConfigMap:app-config
+
+------------------------------------------------------------------------
+
+[SECTION 3] CIRCULAR PERMISSION DETECTION  (Depth-First Search)
+------------------------------------------------------------------------
+  Cycles Detected: 1
+
+  [Cycle #1] ServiceAccount:service-b-sa <-> Role:service-a-admin <-> ServiceAccount:service-a-sa <-> Role:service-b-admin
+    Impact: Mutual admin grant ù privilege amplification loop
+    Risk:   Compromising ANY node in this cycle grants access to ALL
+
+------------------------------------------------------------------------
+
+[SECTION 4] CRITICAL NODE IDENTIFICATION
+------------------------------------------------------------------------
+  RECOMMENDATION:
+  Remove / restrict permission binding 'Pod:kube-apiserver'
+  to eliminate 2 of 4 attack paths (50% reduction).
+
+  Node ID    : api-server
+  Type       : Pod
+  Namespace  : kube-system
+  Rationale  : Kubernetes API server ù controls all cluster operations
+
+------------------------------------------------------------------------
+
+[SECTION 5] MITRE ATT&CK FOR CONTAINERS MAPPING
+------------------------------------------------------------------------
+  Kill chain tactics: Initial Access, Privilege Escalation, Discovery, Execution, Defense Evasion
+
+  [Hop 1] Internet:public-internet -> Pod:jump-server-pod
+    Technique : T1190 - Exploit Public-Facing Application
+    Tactic    : Initial Access
+    Detail    : Adversary exploits a vulnerability in an internet-facing service to gain initial access.
+
+  [Hop 2] Pod:jump-server-pod -> ServiceAccount:infra-ops-sa
+    Technique : T1078.004 - Valid Accounts: Cloud Accounts
+    Tactic    : Privilege Escalation
+    Detail    : Pod uses a service account token to authenticate to the API server.
+
+  [Hop 3] ServiceAccount:infra-ops-sa -> ClusterRole:node-manager
+    Technique : T1613 - Container and Resource Discovery
+    Tactic    : Discovery
+    Detail    : Role binding grants access to discover and enumerate cluster resources.
+
+  [Hop 4] ClusterRole:node-manager -> Pod:kube-apiserver
+    Technique : T1609 - Container Administration Command
+    Tactic    : Execution
+    Detail    : Node management role grants execution capabilities on cluster nodes.
+
+  [Hop 5] Pod:kube-apiserver -> Database:production-db
+    Technique : T1578 - Modify Cloud Compute Infrastructure
+    Tactic    : Defense Evasion
+    Detail    : Admin access allows reconfiguration of compute resources.
+
+------------------------------------------------------------------------
+
+[SECTION 6] ADVANCED GRAPH ANALYTICS
+------------------------------------------------------------------------
+  Risk Severity Distribution:
+    CRITICAL        ###### (6)
+    HIGH            #### (4)
+    MEDIUM          #### (4)
+    LOW              (0)
+    INFORMATIONAL   ########################## (26)
+
+  Betweenness Centrality (Top Chokepoints):
+    ServiceAccount:webapp-sa                 || 0.0229
+    Pod:webapp-front                         | 0.0155
+    Pod:kube-apiserver                       | 0.0148
+    Pod:ingress-nginx-controller             | 0.0115
+    Role:secret-reader                       | 0.0101
+
+  PageRank / Node Importance:
+    ServiceAccount:webapp-sa                 0.1406
+    Database:production-db                   0.1382
+    Pod:etcd                                 0.1083
+    Pod:webapp-front                         0.0565
+    ServiceAccount:cluster-admin-sa          0.0518
+
+------------------------------------------------------------------------
+
+[SECTION 7] REMEDIATION PLAN
+------------------------------------------------------------------------
+  Prioritised actions to break the kill chain:
+
+   1. [[T1190] Initial Access]
+      -> Apply web application firewalls (WAF)
+   2. [[T1190] Initial Access]
+      -> Patch known CVEs in ingress controllers
+   3. [[T1190] Initial Access]
+      -> Implement network segmentation
+   4. [[T1078.004] Privilege Escalation]
+      -> Apply least-privilege service account bindings
+   5. [[T1078.004] Privilege Escalation]
+      -> Disable automounting of SA tokens where not needed
+   6. [[T1078.004] Privilege Escalation]
+      -> Rotate service account tokens regularly
+   7. [[T1613] Discovery]
+      -> Apply least-privilege RBAC bindings
+   8. [[T1613] Discovery]
+      -> Audit role bindings regularly
+   9. [[T1613] Discovery]
+      -> Remove unused role bindings
+  10. [[T1609] Execution]
+      -> Restrict node management to dedicated infrastructure SAs
+  11. [[T1609] Execution]
+      -> Implement jump-box access patterns
+  12. [[T1609] Execution]
+      -> Audit all node-level operations
+  13. [[T1578] Defense Evasion]
+      -> Implement infrastructure-as-code with drift detection
+  14. [[T1578] Defense Evasion]
+      -> Restrict modify permissions to CI/CD pipelines
+  15. [[T1578] Defense Evasion]
+      -> Enable change tracking and alerting
+
+------------------------------------------------------------------------
+
+[SECTION 8] NAMESPACE ISOLATION AUDIT
+------------------------------------------------------------------------
+  Namespaces  : 11
+  Isolated    : 3
+  Exposed     : 8
+  Violations  : 11
+
+  [1] ingress-nginx -> default:  Pod:ingress-nginx-controller --[routes-traffic-to]--> Pod:webapp-front
+  [2] default -> data-tier:  Secret:db-credentials --[authenticates-to]--> Database:production-db
+  [3] iam -> dev:  User:dev-1 --[can-exec]--> Pod:dev-tools-pod
+  [4] dev -> default:  Pod:dev-tools-pod --[can-impersonate]--> ServiceAccount:webapp-sa
+  [5] kube-system -> data-tier:  Pod:kube-apiserver --[can-configure]--> Database:production-db
+  [6] ci-cd -> kube-system:  ServiceAccount:ci-deployer-sa --[can-impersonate]--> ServiceAccount:cluster-admin-sa
+  [7] default -> ci-cd:  ServiceAccount:registry-puller-sa --[can-read]--> Secret:app-config-secrets
+  [8] monitoring -> kube-system:  Secret:node-credentials --[authenticates-to]--> Pod:etcd
+
+------------------------------------------------------------------------
+
+========================================================================
+  END OF REPORT
+========================================================================
+
+
+[ATTACK SIMULATION]
+  =================================================================
+  ATTACK SIMULATION ù ADVERSARY PERSPECTIVE
+  =================================================================
+
+  Objective   : Reach production-db from public-internet
+  Est. Time   : 3m 55s
+  Risk Score  : 45.5 (CRITICAL)
+  Final Access: DATA-OWNER (Database access)
+
+  --- Step 1: INITIAL COMPROMISE ---
+  Target     : Internet:public-internet (ns: external)
+  Privilege  : NONE (Anonymous)
+  Time       : 0 seconds (starting position)
+  Difficulty : TRIVIAL
+
+  > The attacker begins from Internet:public-internet, a public-facing entry point with no authentication required.
+
+  --- Step 2: LATERAL MOVEMENT via routes-traffic-to ---
+  Target     : Pod:jump-server-pod (ns: infra)
+  Privilege  : CONTAINER (Pod-level shell)
+  Time       : ~2 minutes (network scan + exploit delivery)
+  Difficulty : HARD
+  ATT&CK     : T1190 - Exploit Public-Facing Application
+
+  > Attacker identifies Pod:jump-server-pod as an exploitable service endpoint. Network scan reveals open port with a potential misconfiguration.
+
+  --- Step 3: LATERAL MOVEMENT via uses-service-account ---
+  Target     : ServiceAccount:infra-ops-sa (ns: infra)
+  Privilege  : API-AUTHENTICATED (SA token)
+  Time       : ~30 seconds (read mounted SA token from /var/run/secrets)
+  Difficulty : HARD
+  ATT&CK     : T1078.004 - Valid Accounts: Cloud Accounts
+
+  > Inside the compromised container, the attacker reads the mounted ServiceAccount token from /var/run/secrets/kubernetes.io/serviceaccount/token.
+
+  --- Step 4: LATERAL MOVEMENT via bound-to ---
+  Target     : ClusterRole:node-manager (ns: cluster-wide)
+  Privilege  : RBAC-CLUSTER (Cluster-wide admin)
+  Time       : ~10 seconds (automatic ù RBAC binding is pre-existing)
+  Difficulty : TRIVIAL
+  ATT&CK     : T1613 - Container and Resource Discovery
+
+  > The stolen SA token is bound to ClusterRole:node-manager ù the attacker now inherits all permissions granted by this role.
+
+  --- Step 5: LATERAL MOVEMENT via can-exec-on-nodes ---
+  Target     : Pod:kube-apiserver (ns: kube-system)
+  Privilege  : RBAC-CLUSTER (Cluster-wide admin)
+  Time       : ~45 seconds (SSH or kubectl debug node)
+  Difficulty : TRIVIAL
+  ATT&CK     : T1609 - Container Administration Command
+
+  > Node management privileges allow the attacker to execute commands directly on cluster worker nodes.
+
+  --- Step 6: LATERAL MOVEMENT via can-configure ---
+  Target     : Database:production-db (ns: data-tier)
+  Privilege  : DATA-OWNER (Database access)
+  Time       : ~30 seconds (modify infrastructure configuration)
+  Difficulty : MODERATE
+  ATT&CK     : T1578 - Modify Cloud Compute Infrastructure
+
+  > Admin access enables the attacker to reconfigure Database:production-db, potentially disabling security controls.
+
+  =================================================================
+  SIMULATION COMPLETE ù Crown jewel 'production-db' compromised.
+  Total exploitation time: 3m 55s
+  =================================================================
+
+[SECURITY SCORECARD]
+  +==============================================================+
+  |  CLUSTER SECURITY SCORECARD                                |
+  +==============================================================+
+  |                                                              |
+  |  Overall Score:   21.5 / 100     Grade: F              |
+  |  [##########----------------------------------------]  |
+  |                                                              |
+  +--------------------------------------------------------------+
+  |  CATEGORY                      SCORE   MAX STATUS             |
+  +--------------------------------------------------------------+
+  |  Attack Paths                   3.0 /  30  FAIL               |
+  |  Cve Exposure                   0.0 /  20  FAIL               |
+  |  Privilege Loops                7.5 /  15  WARN               |
+  |  Namespace Isolation            0.0 /  15  FAIL               |
+  |  Defense Depth                  2.0 /  10  FAIL               |
+  |  Critical Exposure              9.0 /  10  PASS               |
+  +--------------------------------------------------------------+
+  |                                                              |
+  |  Priority Remediation Order:                                 |
+  |    1. Cve Exposure              ù 7 CVEs detected (3 critical, 3  |
+  |    2. Namespace Isolation       ù 11 cross-namespace trust relat  |
+  |    3. Attack Paths              ù 13 attack paths found ù critic  |
+  |                                                              |
+  +==============================================================+
+
+  Category Details:
+  [  3.0/ 30] Attack Paths
+          13 attack paths found ù critical exposure.
+  [  0.0/ 20] Cve Exposure
+          7 CVEs detected (3 critical, 3 high).
+  [  7.5/ 15] Privilege Loops
+          1 circular permission loop(s) detected ù privilege amplification risk.
+  [  0.0/ 15] Namespace Isolation
+          11 cross-namespace trust relationship(s) ù lateral movement risk.
+  [  2.0/ 10] Defense Depth
+          CRITICAL ù only 1 barrier(s) between attacker and crown jewel. Zero-trust violation.
+  [  9.0/ 10] Critical Exposure
+          High path concentration through 'role-secret-reader' (100%). Fixing this one node drastically reduces attack surface.
+
