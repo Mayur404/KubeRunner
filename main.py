@@ -25,6 +25,7 @@ Run `python main.py --help` for the complete argument reference.
 import argparse
 import json
 import sys
+import time
 
 from colorama import Fore, Style, init as colorama_init
 
@@ -36,22 +37,41 @@ from reporter import Reporter
 colorama_init(autoreset=True)
 
 # ---------------------------------------------------------------------------
-# Banner
+# CLI Aesthetics & Logging
 # ---------------------------------------------------------------------------
 
-BANNER = f"""{Fore.RED}{Style.BRIGHT}
-  _  __  ___     _   _   _             _      ____       _   _
- | |/ / ( _ )   / \\ | |_| |_ __ _  ___| | __ |  _ \\ __ _| |_| |__
- | ' /  / _ \\  / _ \\| __| __/ _` |/ __| |/ / | |_) / _` | __| '_ \\
- | . \\ | (_) |/ ___ \\ |_| || (_| | (__|   <  |  __/ (_| | |_| | | |
- |_|\\_\\ \\___//_/   \\_\\__|\\__\\__,_|\\___|_|\\_\\ |_|   \\__,_|\\__|_| |_|
-{Style.RESET_ALL}
-{Fore.CYAN}  Kubernetes Attack Path Visualizer  v2.0{Style.RESET_ALL}
-  Graph-Based Security Analysis for Cloud-Native Infrastructure
-  Algorithms: BFS | Dijkstra | DFS | Centrality | PageRank
-  Framework:  MITRE ATT&CK for Containers
-"""
+def log_info(msg: str):
+    print(f"{Fore.BLUE}{Style.BRIGHT}[*]{Style.RESET_ALL} {msg}")
 
+def log_success(msg: str):
+    print(f"{Fore.GREEN}{Style.BRIGHT}[+]{Style.RESET_ALL} {msg}")
+
+def log_warn(msg: str):
+    print(f"{Fore.YELLOW}{Style.BRIGHT}[~]{Style.RESET_ALL} {msg}")
+
+def log_error(msg: str):
+    print(f"{Fore.RED}{Style.BRIGHT}[x]{Style.RESET_ALL} {msg}")
+    
+def log_step(step: str, msg: str):
+    print(f"\n{Fore.MAGENTA}{Style.BRIGHT}[{step}]{Style.RESET_ALL} {Fore.WHITE}{Style.BRIGHT}{msg}{Style.RESET_ALL}")
+
+def log_detail(msg: str):
+    print(f"    {Fore.LIGHTBLACK_EX}{msg}{Style.RESET_ALL}")
+
+
+BANNER = f"""
+{Fore.RED}{Style.BRIGHT}██╗  ██╗██╗   ██╗██████╗ ███████╗██████╗ ██╗   ██╗███╗   ██╗███╗   ██╗███████╗██████╗ 
+██║ ██╔╝██║   ██║██╔══██╗██╔════╝██╔══██╗██║   ██║████╗  ██║████╗  ██║██╔════╝██╔══██╗
+█████╔╝ ██║   ██║██████╔╝█████╗  ██████╔╝██║   ██║██╔██╗ ██║██╔██╗ ██║█████╗  ██████╔╝
+██╔═██╗ ██║   ██║██╔══██╗██╔══╝  ██╔══██╗██║   ██║██║╚██╗██║██║╚██╗██║██╔══╝  ██╔══██╗
+██║  ██╗╚██████╔╝██████╔╝███████╗██║  ██║╚██████╔╝██║ ╚████║██║ ╚████║███████╗██║  ██║
+╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝{Style.RESET_ALL}
+
+{Fore.CYAN}{Style.BRIGHT}► KubeRunner Attack Path Visualizer v2.0{Style.RESET_ALL}
+{Fore.WHITE}  Graph-Based Security Analysis for Cloud-Native Infrastructure
+  Algorithms: BFS | Dijkstra | DFS | PageRank | Centrality
+  Framework:  MITRE ATT&CK for Containers{Style.RESET_ALL}
+"""
 
 # ---------------------------------------------------------------------------
 # Argument Parser
@@ -59,74 +79,82 @@ BANNER = f"""{Fore.RED}{Style.BRIGHT}
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="k8s-attack-viz",
-        description="K8s Attack Path Visualizer — Advanced graph-based cluster security analysis.",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        prog="kuberunner",
+        description=f"{Fore.CYAN}K8s Attack Path Visualizer — Advanced graph-based cluster security analysis.{Style.RESET_ALL}",
+        formatter_class=argparse.RawTextHelpFormatter,
         epilog=f"""
-{Fore.CYAN}Examples:{Style.RESET_ALL}
-  Quick analysis with mock data:
-    python main.py --mock
+{Fore.MAGENTA}{Style.BRIGHT}=================[ QUICKSTART & EXAMPLES ]================={Style.RESET_ALL}
 
-  Full scan (auto-detect all entry points & crown jewels):
-    python main.py --mock --full-scan
+{Fore.GREEN}[1] Run Full Security Audit (Mock Data):{Style.RESET_ALL}
+    $ python main.py --mock
+    (Generates 8-section Kill Chain Report + saves PDF)
 
-  Generate interactive HTML graph visualization:
-    python main.py --mock --visualize
+{Fore.GREEN}[2] See The Magic (Killer Differentiator Features):{Style.RESET_ALL}
+    $ python main.py --mock --simulate --scorecard
+    (Runs step-by-step adversary narrative & gives 0-100 grade)
 
-  Save a temporal snapshot for future diffing:
-    python main.py --mock --snapshot
+{Fore.GREEN}[3] Visualize The Attack Graph in Browser:{Style.RESET_ALL}
+    $ python main.py --mock --visualize
 
-  Diff against a previous snapshot:
-    python main.py --mock --diff snapshots/snap_20260309.json
+{Fore.GREEN}[4] What-If Remediation Simulator:{Style.RESET_ALL}
+    $ python main.py --mock --what-if-remove jump-server-pod
+    (Simulates deleting a node and compares Before vs After attack paths)
 
-  Custom source/target with JSON export:
-    python main.py --mock --source public-internet --target etcd-pod --export-json out.json
-        """,
+{Fore.GREEN}[5] Full Attack Surface Scan:{Style.RESET_ALL}
+    $ python main.py --mock --full-scan
+    (Automatically maps all valid Entry Point -> Crown Jewel paths)
+
+{Fore.GREEN}[6] Continuous Posture Tracking (Temporal Diffing):{Style.RESET_ALL}
+    $ python main.py --mock --snapshot
+    $ python main.py --mock --diff snapshots/snap_20260310_1200.json
+"""
     )
 
     # Data source
-    ds = p.add_mutually_exclusive_group()
-    ds.add_argument("--mock", action="store_true", help="Use built-in mock dataset (default)")
+    g_data = p.add_argument_group(f"{Fore.YELLOW}Data Source Options{Style.RESET_ALL}")
+    ds = g_data.add_mutually_exclusive_group()
+    ds.add_argument("--mock", action="store_true", help="Use built-in 40-node mock dataset (default)")
     ds.add_argument("--live", action="store_true", help="Scrape live cluster via kubectl")
-    p.add_argument("--filepath", type=str, default="mock-cluster-graph.json",
+    g_data.add_argument("--filepath", type=str, default="mock-cluster-graph.json",
                    help="Path to a custom cluster graph JSON file")
 
     # Analysis targets
-    p.add_argument("--source", type=str, default="public-internet",
+    g_target = p.add_argument_group(f"{Fore.YELLOW}Analysis Targets{Style.RESET_ALL}")
+    g_target.add_argument("--source", type=str, default="public-internet",
                    help="Entry point node ID (default: public-internet)")
-    p.add_argument("--target", type=str, default="production-db",
+    g_target.add_argument("--target", type=str, default="production-db",
                    help="Crown jewel target node ID (default: production-db)")
-    p.add_argument("--blast-source", type=str, default="dev-pod",
+    g_target.add_argument("--blast-source", type=str, default="dev-pod",
                    help="Compromised node for blast radius (default: dev-pod)")
-    p.add_argument("--blast-hops", type=int, default=3, metavar="N",
-                   help="Max BFS depth (default: 3)")
+    g_target.add_argument("--blast-hops", type=int, default=3, metavar="N",
+                   help="Max BFS traversing depth (default: 3)")
 
     # Output
-    p.add_argument("--pdf", type=str, default="Kill_Chain_Report.pdf", metavar="FILE",
+    g_out = p.add_argument_group(f"{Fore.YELLOW}Output & Reporting{Style.RESET_ALL}")
+    g_out.add_argument("--pdf", type=str, default="Kill_Chain_Report.pdf", metavar="FILE",
                    help="PDF output path (default: Kill_Chain_Report.pdf)")
-    p.add_argument("--no-pdf", action="store_true", help="Skip PDF generation")
-    p.add_argument("--export-json", type=str, metavar="FILE",
-                   help="Export results as machine-readable JSON")
-    p.add_argument("--list-nodes", action="store_true",
-                   help="Print all node IDs and exit")
+    g_out.add_argument("--no-pdf", action="store_true", help="Skip PDF generation (console only)")
+    g_out.add_argument("--export-json", type=str, metavar="FILE",
+                   help="Export full results as machine-readable JSON")
+    g_out.add_argument("--list-nodes", action="store_true",
+                   help="Print all cluster nodes and exit")
 
     # Advanced features
-    p.add_argument("--visualize", action="store_true",
-                   help="Generate interactive HTML graph (Bonus 1)")
-    p.add_argument("--full-scan", action="store_true",
+    g_adv = p.add_argument_group(f"{Fore.YELLOW}Advanced & Killer Features{Style.RESET_ALL}")
+    g_adv.add_argument("--visualize", action="store_true",
+                   help="[Bonus] Generate interactive HTML graph via Cytoscape.js")
+    g_adv.add_argument("--full-scan", action="store_true",
                    help="Auto-scan all entry points vs all crown jewels")
-    p.add_argument("--snapshot", action="store_true",
-                   help="Save graph snapshot for temporal diffing (Bonus 3)")
-    p.add_argument("--diff", type=str, metavar="PREV_FILE",
-                   help="Diff current state against a previous snapshot")
-
-    # Killer features
-    p.add_argument("--simulate", action="store_true",
-                   help="Run attack simulation with step-by-step adversary narrative")
-    p.add_argument("--scorecard", action="store_true",
-                   help="Generate cluster security scorecard (0-100 grade)")
-    p.add_argument("--what-if-remove", type=str, metavar="NODE_ID",
-                   help="Simulate removing a node and show before/after attack surface")
+    g_adv.add_argument("--snapshot", action="store_true",
+                   help="[Bonus] Save graph snapshot for temporal diffing")
+    g_adv.add_argument("--diff", type=str, metavar="PREV_FILE",
+                   help="[Bonus] Diff current state against a previous snapshot")
+    g_adv.add_argument("--simulate", action="store_true",
+                   help="[Killer] Run attack simulation with step-by-step adversary narrative")
+    g_adv.add_argument("--scorecard", action="store_true",
+                   help="[Killer] Generate comprehensive cluster security scorecard (0-100 grade)")
+    g_adv.add_argument("--what-if-remove", type=str, metavar="NODE_ID",
+                   help="[Killer] Simulate removing a node and show before/after impact")
 
     return p
 
@@ -141,30 +169,47 @@ def main() -> None:
     use_mock = args.mock or not args.live
 
     # ---- 1. Ingest ----
-    print(f"{Fore.CYAN}[1/4] Loading cluster state...{Style.RESET_ALL}")
+    log_step("PHASE 1", "Ingestion & Enrichment Pipeline")
     try:
+        log_info(f"Targeting environment: {'Mock Dataset' if use_mock else 'Live Kubernetes Cluster'}")
+        if use_mock:
+            log_detail(f"Source file: {args.filepath}")
+        
+        t0 = time.time()
         ingestor = KubernetesIngestor(use_mock=use_mock, mock_file_path=args.filepath)
         raw_data = ingestor.load_data()
+        t1 = time.time()
+        
+        log_success(f"Successfully ingested raw cluster state ({((t1-t0)*1000):.1f}ms)")
     except FileNotFoundError as e:
-        print(f"{Fore.RED}[ERROR] {e}{Style.RESET_ALL}", file=sys.stderr)
+        log_error(str(e))
         sys.exit(1)
 
     # ---- 2. Graph ----
-    print(f"{Fore.CYAN}[2/4] Building DAG...{Style.RESET_ALL}")
+    log_step("PHASE 2", "Graph Construction & Analysis Initialization")
+    
+    t0 = time.time()
     cg = ClusterGraph(raw_data)
     g = cg.get_graph()
     s = cg.summary()
+    t1 = time.time()
 
-    print(f"      Cluster     : {s['cluster_name']}")
-    print(f"      Nodes       : {Fore.YELLOW}{s['nodes']}{Style.RESET_ALL}")
-    print(f"      Edges       : {Fore.YELLOW}{s['edges']}{Style.RESET_ALL}")
-    print(f"      Is DAG      : {'Yes' if s['is_dag'] else Fore.RED + 'No (cycles present)' + Style.RESET_ALL}")
-    print(f"      Crown Jewels: {Fore.RED}{', '.join(s['crown_jewels']) or 'None'}{Style.RESET_ALL}")
-    print(f"      Entry Points: {Fore.GREEN}{', '.join(s['source_nodes']) or 'None'}{Style.RESET_ALL}")
+    log_success(f"Built NetworkX DiGraph successfully ({((t1-t0)*1000):.1f}ms)")
+    log_info(f"Context: {Fore.YELLOW}{s['cluster_name']}{Style.RESET_ALL}")
+    log_info(f"Nodes  : {Fore.WHITE}{Style.BRIGHT}{s['nodes']}{Style.RESET_ALL} entities mapped")
+    log_info(f"Edges  : {Fore.WHITE}{Style.BRIGHT}{s['edges']}{Style.RESET_ALL} trust relationships established")
+    
+    if s['is_dag']:
+         log_success(f"Topology: Directed Acyclic Graph (DAG) - Clean structure")
+    else:
+         log_warn(f"Topology: Contains cycles (Potential privilege escalation loops detected)")
+
+    log_detail(f"Crown Jewels discovered: {len(s['crown_jewels'])}")
+    log_detail(f"Entry Points discovered: {len(s['source_nodes'])}")
 
     # ---- List nodes ----
     if args.list_nodes:
-        print(f"\n{Fore.CYAN}[NODE LIST]{Style.RESET_ALL}")
+        print(f"\n{Fore.CYAN}[NODE DIRECTORY]{Style.RESET_ALL}")
         print(f"  {'ID':<35} {'TYPE':<18} {'NAMESPACE':<18} {'RISK':>6} {'CVE'}")
         print("-" * 95)
         for nid, data in sorted(g.nodes(data=True), key=lambda x: x[1].get("type", "")):
@@ -177,25 +222,30 @@ def main() -> None:
     # Validate nodes
     for label, nid in [("--source", args.source), ("--target", args.target), ("--blast-source", args.blast_source)]:
         if nid not in g:
-            print(f"{Fore.RED}[ERROR] Node '{nid}' (from {label}) not found. Use --list-nodes.{Style.RESET_ALL}")
+            log_error(f"Target node '{nid}' (from {label}) missing from graph. Run with --list-nodes to see available IDs.")
             sys.exit(1)
 
     # ---- 3. Analyze ----
-    print(f"{Fore.CYAN}[3/4] Running security algorithms...{Style.RESET_ALL}")
+    log_step("PHASE 3", "Executing Security Algorithms")
+    t0 = time.time()
     analyzer = SecurityAnalyzer(g)
     reporter = Reporter(analyzer, g)
+    t1 = time.time()
+    log_success(f"Analysis complete (BFS, Dijkstra, DFS, Centrality, PageRank) ({((t1-t0)*1000):.1f}ms)")
 
     # ---- 4. Report ----
-    print(f"{Fore.CYAN}[4/4] Generating Kill Chain Report...{Style.RESET_ALL}")
+    log_step("PHASE 4", "Generating Kill Chain Report")
+    
     report = reporter.generate_cli_report(
         source=args.source, target=args.target,
         blast_source=args.blast_source, hops=args.blast_hops,
     )
-    print(report)
+    print("\n" + report)
 
     # PDF
     if not args.no_pdf:
         reporter.generate_pdf_report(report, output_file=args.pdf)
+        log_success(f"PDF Kill Chain Report rendered to: {Fore.WHITE}{args.pdf}{Style.RESET_ALL}")
 
     # JSON export
     if args.export_json:
@@ -256,7 +306,7 @@ def _export_json(analyzer, cg, args):
     }
     with open(args.export_json, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2)
-    print(f"  {Fore.GREEN}[+] JSON exported: {args.export_json}{Style.RESET_ALL}")
+    log_success(f"Machine-readable JSON generated: {Fore.WHITE}{args.export_json}{Style.RESET_ALL}")
 
 
 def _full_scan(analyzer, cg):
@@ -264,7 +314,7 @@ def _full_scan(analyzer, cg):
     sources = cg.get_source_nodes()
     targets = cg.get_crown_jewel_nodes()
     if not sources or not targets:
-        print(f"  {Fore.YELLOW}No source/target nodes detected for full scan.{Style.RESET_ALL}")
+        log_warn("No source/target nodes detected for full scan.")
         return
     results = analyzer.scan_all_crown_jewels(sources, targets)
     print(f"  {'SOURCE':<25} {'TARGET':<25} {'RISK':>6} {'SEV':<10} {'HOPS':>4} {'PATHS':>5} {'CRITICAL NODE'}")
@@ -282,22 +332,22 @@ def _visualize(g, analyzer, args):
         g, analyzer, args.source, args.target,
         args.blast_source, args.blast_hops, "attack_graph.html",
     )
-    print(f"  {Fore.GREEN}[+] Interactive visualization: {out}{Style.RESET_ALL}")
-    print(f"      Open in your browser to explore the attack graph.")
+    log_success(f"Interactive HTML Visualization generated: {Fore.WHITE}{out}{Style.RESET_ALL}")
+    log_info(f"Open '{out}' in your web browser to explore the cluster graphically.")
 
 
 def _snapshot(g, analyzer, args):
     from temporal import TemporalAnalyzer
     ta = TemporalAnalyzer(g, analyzer)
     path = ta.save_snapshot(args.source, args.target)
-    print(f"  {Fore.GREEN}[+] Snapshot saved: {path}{Style.RESET_ALL}")
+    log_success(f"Cluster snapshot persisted to: {Fore.WHITE}{path}{Style.RESET_ALL}")
 
 
 def _diff(g, analyzer, args):
     from temporal import TemporalAnalyzer
     ta = TemporalAnalyzer(g, analyzer)
     diff = ta.diff_snapshot(args.diff, args.source, args.target)
-    print(diff["summary"])
+    print("\n" + diff["summary"])
 
 
 def _simulate(g, analyzer, args):
