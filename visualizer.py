@@ -166,156 +166,291 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>K8s Attack Path Visualizer</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+<title>KUBERUNNER // THREAT TOPOLOGY</title>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+<script>
+  if (typeof cytoscape === 'undefined') {
+    document.write('<script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"><\/script>');
+  }
+</script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@500;700;900&display=swap');
+
+  :root {
+    --bg: #050a0e;
+    --panel: #0a1018;
+    --border: #0d2137;
+    --neon: #00ff9d;
+    --amber: #ffb000;
+    --threat: #ff2a6d;
+    --cyan: #05d9e8;
+    --muted: #1a3a4a;
+    --text: #c5d1d9;
+    --dim: #3a5060;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
   body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: #0f172a; color: #e2e8f0;
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg); color: var(--text);
     display: flex; flex-direction: column; height: 100vh;
+    overflow: hidden;
   }
+
+  /* SCANLINE OVERLAY */
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,157,0.015) 2px, rgba(0,255,157,0.015) 4px);
+  }
+
+  /* HEADER */
   .header {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-bottom: 1px solid #334155;
-    padding: 12px 24px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
     display: flex; align-items: center; justify-content: space-between;
+    position: relative;
   }
-  .header h1 {
+  .header::before {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--neon), transparent);
+    opacity: 0.4;
+  }
+  .header .brand {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px; font-weight: 900;
+    color: var(--neon);
+    text-shadow: 0 0 10px rgba(0,255,157,0.3);
+    letter-spacing: 3px;
+    animation: glitch 4s infinite;
+  }
+  @keyframes glitch {
+    0%, 92%, 100% { opacity: 1; transform: none; }
+    93% { opacity: 0.8; transform: translateX(-2px); color: var(--threat); }
+    94% { opacity: 1; transform: translateX(1px); color: var(--cyan); }
+    95% { opacity: 1; transform: none; color: var(--neon); }
+  }
+  .header .sub {
+    font-size: 9px; color: var(--dim); letter-spacing: 2px;
+    text-transform: uppercase; margin-top: 2px;
+  }
+
+  /* STATS BAR */
+  .metrics {
+    display: flex; gap: 0; padding: 0;
+    background: var(--panel); border-bottom: 1px solid var(--border);
+    font-size: 10px;
+  }
+  .metric {
+    flex: 1; padding: 8px 12px; text-align: center;
+    border-right: 1px solid var(--border);
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--dim);
+  }
+  .metric:last-child { border-right: none; }
+  .metric .val {
     font-size: 18px; font-weight: 700;
-    background: linear-gradient(90deg, #ef4444, #f97316);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    font-family: 'Orbitron', sans-serif;
+    display: block; margin-top: 2px;
   }
-  .header .subtitle { font-size: 12px; color: #64748b; }
-  .stats-bar {
-    display: flex; gap: 16px; padding: 8px 24px;
-    background: #1e293b; border-bottom: 1px solid #334155;
-    font-size: 12px; flex-wrap: wrap;
+  .val-threat { color: var(--threat); text-shadow: 0 0 8px rgba(255,42,109,0.4); }
+  .val-warn { color: var(--amber); text-shadow: 0 0 8px rgba(255,176,0,0.3); }
+  .val-ok { color: var(--neon); text-shadow: 0 0 8px rgba(0,255,157,0.3); }
+  .val-info { color: var(--cyan); text-shadow: 0 0 8px rgba(5,217,232,0.3); }
+
+  /* MAIN */
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* GRAPH AREA */
+  #cy {
+    flex: 1; background: var(--bg);
+    background-image:
+      radial-gradient(circle at 50% 50%, rgba(0,255,157,0.02) 0%, transparent 70%),
+      linear-gradient(rgba(0,255,157,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,157,0.03) 1px, transparent 1px);
+    background-size: 100% 100%, 40px 40px, 40px 40px;
   }
-  .stat { display: flex; align-items: center; gap: 6px; }
-  .stat-value {
-    font-weight: 700; font-size: 14px;
-    padding: 2px 8px; border-radius: 6px;
-  }
-  .stat-critical { background: #7f1d1d; color: #fca5a5; }
-  .stat-warn { background: #78350f; color: #fbbf24; }
-  .stat-info { background: #1e3a5f; color: #7dd3fc; }
-  .stat-ok { background: #14532d; color: #86efac; }
 
-  .main-container { display: flex; flex: 1; overflow: hidden; }
-
-  #cy { flex: 1; background: #0f172a; }
-
+  /* SIDEBAR */
   .sidebar {
-    width: 340px; background: #1e293b; border-left: 1px solid #334155;
-    overflow-y: auto; padding: 16px; font-size: 13px;
+    width: 320px; background: var(--panel);
+    border-left: 1px solid var(--border);
+    overflow-y: auto; padding: 0; font-size: 11px;
   }
-  .sidebar h3 {
-    font-size: 13px; text-transform: uppercase; letter-spacing: 1px;
-    color: #94a3b8; margin: 16px 0 8px 0; border-bottom: 1px solid #334155;
-    padding-bottom: 4px;
-  }
-  .sidebar h3:first-child { margin-top: 0; }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: var(--bg); }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  .path-step {
+  .sb-section {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sb-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 9px; font-weight: 700;
+    color: var(--neon); letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .sb-title::before {
+    content: ''; width: 3px; height: 12px;
+    background: var(--neon); display: inline-block;
+  }
+
+  /* KILL CHAIN STEPS */
+  .kc-step {
     display: flex; align-items: flex-start; gap: 8px;
-    padding: 6px 8px; margin: 2px 0; border-radius: 6px;
-    background: #0f172a; border: 1px solid #334155;
-    transition: all 0.2s;
-  }
-  .path-step:hover { border-color: #ef4444; }
-  .path-step .step-num {
-    min-width: 22px; height: 22px; border-radius: 50%;
-    background: #ef4444; color: white;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700;
-  }
-  .path-step .step-info { flex: 1; }
-  .path-step .step-name { font-weight: 600; color: #f1f5f9; }
-  .path-step .step-detail { color: #94a3b8; font-size: 11px; }
-  .cve-tag {
-    display: inline-block; background: #7f1d1d; color: #fca5a5;
-    padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;
-  }
-
-  .legend { display: flex; flex-wrap: wrap; gap: 6px; }
-  .legend-item {
-    display: flex; align-items: center; gap: 4px;
-    font-size: 11px; color: #94a3b8;
-  }
-  .legend-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    display: inline-block;
-  }
-
-  .node-detail {
-    background: #0f172a; border: 1px solid #334155;
-    border-radius: 8px; padding: 12px; margin-top: 8px;
-  }
-  .node-detail .nd-row { display: flex; justify-content: space-between; margin: 3px 0; }
-  .node-detail .nd-label { color: #64748b; font-size: 11px; }
-  .node-detail .nd-value { color: #e2e8f0; font-size: 12px; font-weight: 500; }
-
-  .controls {
-    display: flex; gap: 8px; margin-top: 8px;
-  }
-  .btn {
-    padding: 6px 14px; border-radius: 6px; border: 1px solid #475569;
-    background: #334155; color: #e2e8f0; cursor: pointer;
-    font-size: 12px; font-weight: 500;
+    padding: 6px 8px; margin: 3px 0; border-radius: 3px;
+    background: rgba(0,255,157,0.03);
+    border: 1px solid var(--border);
     transition: all 0.15s;
+    cursor: pointer;
   }
-  .btn:hover { background: #475569; }
-  .btn-danger { background: #7f1d1d; border-color: #991b1b; }
-  .btn-danger:hover { background: #991b1b; }
+  .kc-step:hover {
+    border-color: var(--threat);
+    background: rgba(255,42,109,0.05);
+    box-shadow: 0 0 12px rgba(255,42,109,0.1);
+  }
+  .kc-num {
+    min-width: 20px; height: 20px; border-radius: 2px;
+    background: var(--threat); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+  }
+  .kc-info { flex: 1; }
+  .kc-name { font-weight: 600; color: #e8eff4; font-size: 11px; }
+  .kc-detail { color: var(--dim); font-size: 9px; margin-top: 1px; }
+  .cve-tag {
+    display: inline-block; background: rgba(255,42,109,0.15);
+    color: var(--threat); border: 1px solid rgba(255,42,109,0.3);
+    padding: 0 5px; border-radius: 2px; font-size: 9px; font-weight: 600;
+  }
+
+  /* CONNECTOR LINE */
+  .kc-connector {
+    width: 1px; height: 6px; background: var(--border);
+    margin-left: 17px;
+  }
+
+  /* NODE DETAIL */
+  .nd-panel {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 3px; padding: 10px;
+  }
+  .nd-row { display: flex; justify-content: space-between; margin: 2px 0; }
+  .nd-label { color: var(--dim); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
+  .nd-value { color: var(--text); font-size: 10px; font-weight: 500; text-align: right; }
+
+  /* LEGEND */
+  .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .lg-item { display: flex; align-items: center; gap: 5px; font-size: 9px; color: var(--dim); }
+  .lg-dot { width: 8px; height: 8px; border-radius: 1px; display: inline-block; }
+
+  /* BUTTONS */
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn {
+    padding: 5px 10px; border-radius: 2px;
+    border: 1px solid var(--border);
+    background: var(--bg); color: var(--text);
+    cursor: pointer; font-size: 9px; font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase; letter-spacing: 1px;
+    transition: all 0.1s;
+  }
+  .btn:hover { border-color: var(--neon); color: var(--neon); box-shadow: 0 0 8px rgba(0,255,157,0.15); }
+  .btn-threat { border-color: rgba(255,42,109,0.4); color: var(--threat); }
+  .btn-threat:hover { border-color: var(--threat); box-shadow: 0 0 12px rgba(255,42,109,0.2); }
+
+  /* BOTTOM STATUS BAR */
+  .status-bar {
+    background: var(--panel); border-top: 1px solid var(--border);
+    padding: 4px 20px; font-size: 9px; color: var(--dim);
+    display: flex; justify-content: space-between;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .status-bar .live { color: var(--neon); animation: blink 1.5s infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* PULSE ANIMATION FOR ATTACK PATH NODES */
+  @keyframes pulse-threat {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,42,109,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(255,42,109,0); }
+  }
 </style>
 </head>
 <body>
 
 <div class="header">
   <div>
-    <h1>Kubernetes Attack Path Visualizer</h1>
-    <div class="subtitle">Graph-Based Security Analysis for Cloud-Native Infrastructure</div>
+    <div class="brand">KUBERUNNER</div>
+    <div class="sub">Threat Topology Visualizer // Attack Surface Mapping</div>
   </div>
-  <div style="display:flex; gap:8px;">
-    <button class="btn btn-danger" onclick="animatePath()">Animate Attack</button>
-    <button class="btn" onclick="resetView()">Reset View</button>
-    <button class="btn" onclick="toggleLayout()">Toggle Layout</button>
+  <div class="btn-row">
+    <button class="btn btn-threat" onclick="animatePath()">&#9658; SIMULATE ATTACK</button>
+    <button class="btn" onclick="resetView()">RESET</button>
+    <button class="btn" onclick="toggleLayout()">LAYOUT</button>
   </div>
 </div>
 
-<div class="stats-bar">
-  <div class="stat">Nodes: <span class="stat-value stat-info">__TOTAL_NODES__</span></div>
-  <div class="stat">Edges: <span class="stat-value stat-info">__TOTAL_EDGES__</span></div>
-  <div class="stat">Attack Paths: <span class="stat-value stat-critical">__ALL_PATHS_COUNT__</span></div>
-  <div class="stat">Shortest Path Hops: <span class="stat-value stat-warn">__PATH_HOPS__</span></div>
-  <div class="stat">Risk Score: <span class="stat-value stat-critical">__RISK_SCORE__ (__SEVERITY__)</span></div>
-  <div class="stat">Blast Radius: <span class="stat-value stat-warn">__BLAST_COUNT__</span></div>
-  <div class="stat">Cycles: <span class="stat-value stat-critical">__CYCLE_COUNT__</span></div>
-  <div class="stat">Critical Node: <span class="stat-value stat-critical">__CRITICAL_NODE__</span></div>
+<div class="metrics">
+  <div class="metric">Nodes<span class="val val-info">__TOTAL_NODES__</span></div>
+  <div class="metric">Edges<span class="val val-info">__TOTAL_EDGES__</span></div>
+  <div class="metric">Attack Paths<span class="val val-threat">__ALL_PATHS_COUNT__</span></div>
+  <div class="metric">Kill Chain Hops<span class="val val-warn">__PATH_HOPS__</span></div>
+  <div class="metric">Risk Score<span class="val val-threat">__RISK_SCORE__</span></div>
+  <div class="metric">Severity<span class="val val-threat">__SEVERITY__</span></div>
+  <div class="metric">Blast Zone<span class="val val-warn">__BLAST_COUNT__</span></div>
+  <div class="metric">Cycles<span class="val val-threat">__CYCLE_COUNT__</span></div>
 </div>
 
-<div class="main-container">
+<div class="main">
   <div id="cy"></div>
-  <div class="sidebar" id="sidebar">
-    <h3>Attack Kill Chain</h3>
-    <div id="path-list"></div>
+  <div class="sidebar">
 
-    <h3>Node Detail</h3>
-    <div class="node-detail" id="node-detail">
-      <p style="color:#64748b">Click a node on the graph to inspect.</p>
+    <div class="sb-section">
+      <div class="sb-title">Kill Chain Trace</div>
+      <div id="path-list"></div>
     </div>
 
-    <h3>Legend</h3>
-    <div class="legend" id="legend"></div>
-
-    <h3>Controls</h3>
-    <div class="controls">
-      <button class="btn" onclick="highlightBlast()">Show Blast Zone</button>
-      <button class="btn" onclick="highlightCycles()">Show Cycles</button>
-      <button class="btn" onclick="clearHighlights()">Clear</button>
+    <div class="sb-section">
+      <div class="sb-title">Entity Inspector</div>
+      <div class="nd-panel" id="node-detail">
+        <p style="color:var(--dim); font-size:9px;">[ SELECT NODE TO INSPECT ]</p>
+      </div>
     </div>
+
+    <div class="sb-section">
+      <div class="sb-title">Entity Legend</div>
+      <div class="legend-grid" id="legend"></div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-title">Threat Controls</div>
+      <div class="btn-row">
+        <button class="btn" onclick="highlightBlast()">BLAST ZONE</button>
+        <button class="btn" onclick="highlightCycles()">CYCLES</button>
+        <button class="btn" onclick="clearHighlights()">CLEAR</button>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-title">Critical Chokepoint</div>
+      <div class="nd-panel">
+        <div class="nd-row"><span class="nd-label">Node</span><span class="nd-value" style="color:var(--threat)">__CRITICAL_NODE__</span></div>
+        <div class="nd-row"><span class="nd-label">Action</span><span class="nd-value" style="color:var(--amber)">REMOVE TO SEVER PATHS</span></div>
+      </div>
+    </div>
+
   </div>
+</div>
+
+<div class="status-bar">
+  <span><span class="live">&#9679;</span> KUBERUNNER v2.0 ACTIVE</span>
+  <span>MITRE ATT&CK MAPPED // DIJKSTRA + BFS + DFS</span>
+  <span>GRAPH ENGINE: NETWORKX 3.2</span>
 </div>
 
 <script>
@@ -329,143 +464,67 @@ const cy = cytoscape({
     {
       selector: 'node',
       style: {
-        'label': 'data(label)',
-        'text-wrap': 'wrap',
-        'text-max-width': '100px',
-        'font-size': '9px',
-        'font-weight': '500',
-        'color': '#e2e8f0',
-        'text-outline-color': '#0f172a',
-        'text-outline-width': 2,
-        'text-valign': 'bottom',
-        'text-margin-y': 5,
-        'background-color': 'data(color)',
-        'shape': 'data(shape)',
-        'width': 35,
-        'height': 35,
-        'border-width': 2,
-        'border-color': '#334155',
+        'label': 'data(label)', 'text-wrap': 'wrap', 'text-max-width': '90px',
+        'font-size': '8px', 'font-weight': '500', 'font-family': 'JetBrains Mono, monospace',
+        'color': '#8fa5b5', 'text-outline-color': '#050a0e', 'text-outline-width': 2,
+        'text-valign': 'bottom', 'text-margin-y': 5,
+        'background-color': 'data(color)', 'shape': 'data(shape)',
+        'width': 30, 'height': 30, 'border-width': 1.5, 'border-color': '#1a3a4a',
       }
     },
-    {
-      selector: 'node.attack-path',
-      style: {
-        'border-color': '#ef4444',
-        'border-width': 3,
-        'width': 45,
-        'height': 45,
-      }
-    },
-    {
-      selector: 'node.crown-jewel',
-      style: {
-        'border-color': '#f59e0b',
-        'border-width': 4,
-        'width': 50,
-        'height': 50,
-      }
-    },
-    {
-      selector: 'node.entry-point',
-      style: {
-        'border-color': '#22c55e',
-        'border-width': 4,
-        'width': 50,
-        'height': 50,
-      }
-    },
-    {
-      selector: 'node.critical-node',
-      style: {
-        'border-color': '#a855f7',
-        'border-width': 4,
-        'border-style': 'double',
-      }
-    },
-    {
-      selector: 'node.blast-highlight',
-      style: {
-        'background-opacity': 0.9,
-        'border-color': '#fb923c',
-        'border-width': 3,
-      }
-    },
-    {
-      selector: 'node.cycle-highlight',
-      style: {
-        'border-color': '#c084fc',
-        'border-width': 4,
-        'border-style': 'dashed',
-      }
-    },
-    {
-      selector: 'node.animate-step',
-      style: {
-        'background-color': '#ef4444',
-        'border-color': '#fbbf24',
-        'border-width': 5,
-        'width': 55,
-        'height': 55,
-        'z-index': 999,
-      }
-    },
-    {
-      selector: 'edge',
-      style: {
-        'width': 1.5,
-        'line-color': '#475569',
-        'target-arrow-color': '#475569',
-        'target-arrow-shape': 'triangle',
-        'curve-style': 'bezier',
-        'label': 'data(label)',
-        'font-size': '7px',
-        'color': '#64748b',
-        'text-rotation': 'autorotate',
-        'text-margin-y': -8,
-      }
-    },
-    {
-      selector: 'edge.attack-edge',
-      style: {
-        'width': 3,
-        'line-color': '#ef4444',
-        'target-arrow-color': '#ef4444',
-        'line-style': 'solid',
-        'z-index': 999,
-      }
-    },
-    {
-      selector: 'node.dimmed',
-      style: { 'opacity': 0.15 }
-    },
-    {
-      selector: 'edge.dimmed',
-      style: { 'opacity': 0.08 }
-    },
+    { selector: 'node.attack-path', style: {
+        'border-color': '#ff2a6d', 'border-width': 2.5, 'width': 40, 'height': 40,
+    }},
+    { selector: 'node.crown-jewel', style: {
+        'border-color': '#ffb000', 'border-width': 3, 'width': 46, 'height': 46,
+    }},
+    { selector: 'node.entry-point', style: {
+        'border-color': '#00ff9d', 'border-width': 3, 'width': 46, 'height': 46,
+    }},
+    { selector: 'node.critical-node', style: {
+        'border-color': '#c084fc', 'border-width': 3, 'border-style': 'double',
+    }},
+    { selector: 'node.blast-highlight', style: {
+        'background-opacity': 0.9, 'border-color': '#ffb000', 'border-width': 3,
+    }},
+    { selector: 'node.cycle-highlight', style: {
+        'border-color': '#c084fc', 'border-width': 3, 'border-style': 'dashed',
+    }},
+    { selector: 'node.animate-step', style: {
+        'background-color': '#ff2a6d', 'border-color': '#ffb000', 'border-width': 4,
+        'width': 50, 'height': 50, 'z-index': 999,
+    }},
+    { selector: 'edge', style: {
+        'width': 1, 'line-color': '#0d2137', 'target-arrow-color': '#1a3a4a',
+        'target-arrow-shape': 'triangle', 'curve-style': 'bezier',
+        'label': 'data(label)', 'font-size': '6px', 'font-family': 'JetBrains Mono, monospace',
+        'color': '#1a3a4a', 'text-rotation': 'autorotate', 'text-margin-y': -6,
+    }},
+    { selector: 'edge.attack-edge', style: {
+        'width': 2.5, 'line-color': '#ff2a6d', 'target-arrow-color': '#ff2a6d',
+        'line-style': 'solid', 'z-index': 999,
+    }},
+    { selector: 'node.dimmed', style: { 'opacity': 0.1 } },
+    { selector: 'edge.dimmed', style: { 'opacity': 0.05 } },
   ],
   layout: {
-    name: 'cose',
-    animate: true,
-    animationDuration: 800,
-    nodeRepulsion: 8000,
-    idealEdgeLength: 120,
-    gravity: 0.3,
+    name: 'cose', animate: true, animationDuration: 1000,
+    nodeRepulsion: 9000, idealEdgeLength: 130, gravity: 0.25,
   },
-  minZoom: 0.2,
-  maxZoom: 3,
+  minZoom: 0.15, maxZoom: 3.5,
 });
 
-// --- Path list ---
+// --- Kill Chain List ---
 const pathList = document.getElementById('path-list');
 attackPath.forEach((nodeId, i) => {
   const n = cy.getElementById(nodeId);
   const d = n.data();
-  let html = '<div class="path-step" onmouseover="highlightNode(\'' + nodeId + '\')" onmouseout="unhighlightNode(\'' + nodeId + '\')">';
-  html += '<div class="step-num">' + (i+1) + '</div>';
-  html += '<div class="step-info">';
-  html += '<div class="step-name">' + (d.type || '') + ': ' + (d.name || nodeId) + '</div>';
-  html += '<div class="step-detail">' + (d.namespace ? 'ns: ' + d.namespace : '');
-  if (d.cve) html += ' <span class="cve-tag">' + d.cve + ' (CVSS ' + d.risk_score + ')</span>';
+  if (i > 0) pathList.innerHTML += '<div class="kc-connector"></div>';
+  let html = '<div class="kc-step" onmouseover="highlightNode(\'' + nodeId + '\')" onmouseout="unhighlightNode(\'' + nodeId + '\')">';
+  html += '<div class="kc-num">' + (i+1) + '</div>';
+  html += '<div class="kc-info"><div class="kc-name">' + (d.type||'') + ' : ' + (d.name||nodeId) + '</div>';
+  html += '<div class="kc-detail">' + (d.namespace ? d.namespace : '-');
+  if (d.cve) html += ' <span class="cve-tag">' + d.cve + '</span>';
   html += '</div></div></div>';
   pathList.innerHTML += html;
 });
@@ -476,11 +535,8 @@ const types = {"Internet":"#ef4444","Service":"#f97316","Pod":"#3b82f6","Service
   "Role":"#06b6d4","ClusterRole":"#0ea5e9","Secret":"#eab308","ConfigMap":"#84cc16",
   "Database":"#ec4899","User":"#14b8a6"};
 Object.entries(types).forEach(([t,c]) => {
-  legend.innerHTML += '<div class="legend-item"><span class="legend-dot" style="background:'+c+'"></span>'+t+'</div>';
+  legend.innerHTML += '<div class="lg-item"><span class="lg-dot" style="background:'+c+'"></span>'+t+'</div>';
 });
-legend.innerHTML += '<div class="legend-item"><span class="legend-dot" style="border:2px solid #ef4444; background:transparent"></span>Attack Path</div>';
-legend.innerHTML += '<div class="legend-item"><span class="legend-dot" style="border:2px solid #22c55e; background:transparent"></span>Entry Point</div>';
-legend.innerHTML += '<div class="legend-item"><span class="legend-dot" style="border:2px solid #f59e0b; background:transparent"></span>Crown Jewel</div>';
 
 // --- Node click ---
 cy.on('tap', 'node', function(evt) {
@@ -490,10 +546,10 @@ cy.on('tap', 'node', function(evt) {
     <div class="nd-row"><span class="nd-label">ID</span><span class="nd-value">${d.id}</span></div>
     <div class="nd-row"><span class="nd-label">Type</span><span class="nd-value">${d.type}</span></div>
     <div class="nd-row"><span class="nd-label">Name</span><span class="nd-value">${d.name}</span></div>
-    <div class="nd-row"><span class="nd-label">Namespace</span><span class="nd-value">${d.namespace}</span></div>
-    <div class="nd-row"><span class="nd-label">Risk Score</span><span class="nd-value">${d.risk_score}</span></div>
+    <div class="nd-row"><span class="nd-label">Namespace</span><span class="nd-value">${d.namespace || '-'}</span></div>
+    <div class="nd-row"><span class="nd-label">Risk</span><span class="nd-value" style="color:var(--threat)">${d.risk_score}</span></div>
     ${d.cve ? '<div class="nd-row"><span class="nd-label">CVE</span><span class="nd-value"><span class="cve-tag">'+d.cve+'</span></span></div>' : ''}
-    <div class="nd-row"><span class="nd-label">Description</span><span class="nd-value" style="font-size:11px">${d.description || 'N/A'}</span></div>
+    <div class="nd-row"><span class="nd-label">Desc</span><span class="nd-value" style="font-size:9px">${d.description || '-'}</span></div>
   `;
 });
 
@@ -502,37 +558,28 @@ let currentLayout = 'cose';
 function toggleLayout() {
   currentLayout = currentLayout === 'cose' ? 'breadthfirst' : 'cose';
   const opts = currentLayout === 'breadthfirst'
-    ? { name: 'breadthfirst', directed: true, spacingFactor: 1.2, animate: true, animationDuration: 600, roots: attackPath.length ? '#' + attackPath[0] : undefined }
-    : { name: 'cose', animate: true, animationDuration: 800, nodeRepulsion: 8000, idealEdgeLength: 120, gravity: 0.3 };
+    ? { name:'breadthfirst', directed:true, spacingFactor:1.3, animate:true, animationDuration:700, roots: attackPath.length ? '#'+attackPath[0] : undefined }
+    : { name:'cose', animate:true, animationDuration:1000, nodeRepulsion:9000, idealEdgeLength:130, gravity:0.25 };
   cy.layout(opts).run();
 }
-
 function resetView() { cy.fit(undefined, 40); clearHighlights(); }
-
-function clearHighlights() {
-  cy.elements().removeClass('dimmed blast-highlight cycle-highlight animate-step');
-}
-
+function clearHighlights() { cy.elements().removeClass('dimmed blast-highlight cycle-highlight animate-step'); }
 function highlightBlast() {
   clearHighlights();
-  const blastNodes = cy.elements('node.blast-radius');
-  cy.elements().not(blastNodes).not(blastNodes.connectedEdges()).addClass('dimmed');
-  blastNodes.addClass('blast-highlight');
+  const b = cy.elements('node.blast-radius');
+  cy.elements().not(b).not(b.connectedEdges()).addClass('dimmed');
+  b.addClass('blast-highlight');
 }
-
 function highlightCycles() {
   clearHighlights();
-  const cycleNodes = cy.elements('node.cycle-member');
-  cy.elements().not(cycleNodes).not(cycleNodes.connectedEdges()).addClass('dimmed');
-  cycleNodes.addClass('cycle-highlight');
+  const c = cy.elements('node.cycle-member');
+  cy.elements().not(c).not(c.connectedEdges()).addClass('dimmed');
+  c.addClass('cycle-highlight');
 }
-
-function highlightNode(id) { cy.getElementById(id).style({'border-color': '#fbbf24', 'border-width': 5}); }
+function highlightNode(id) { cy.getElementById(id).style({'border-color':'#ffb000','border-width':4}); }
 function unhighlightNode(id) { cy.getElementById(id).removeStyle('border-color border-width'); }
-
 function animatePath() {
-  clearHighlights();
-  cy.elements().addClass('dimmed');
+  clearHighlights(); cy.elements().addClass('dimmed');
   let i = 0;
   function step() {
     if (i >= attackPath.length) return;
@@ -540,11 +587,10 @@ function animatePath() {
     node.removeClass('dimmed').addClass('animate-step');
     if (i > 0) {
       const edge = cy.edges('[source="'+attackPath[i-1]+'"][target="'+attackPath[i]+'"]');
-      edge.removeClass('dimmed').style({'line-color':'#ef4444','target-arrow-color':'#ef4444','width':4});
+      edge.removeClass('dimmed').style({'line-color':'#ff2a6d','target-arrow-color':'#ff2a6d','width':3});
     }
-    cy.animate({ center: { eles: node }, duration: 300 });
-    i++;
-    setTimeout(step, 600);
+    cy.animate({ center: { eles: node }, duration: 350 });
+    i++; setTimeout(step, 700);
   }
   step();
 }

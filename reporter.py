@@ -374,7 +374,7 @@ class Reporter:
         return L
 
     # ==================================================================
-    # PDF Report
+    # PDF Report — Military-Grade SOC Aesthetic
     # ==================================================================
 
     def generate_pdf_report(
@@ -386,136 +386,218 @@ class Reporter:
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
 
+        # Color constants
+        BG_DARK = (5, 10, 14)
+        PANEL    = (10, 16, 24)
+        NEON     = (0, 255, 157)
+        THREAT   = (255, 42, 109)
+        AMBER    = (255, 176, 0)
+        CYAN     = (5, 217, 232)
+        TEXT     = (197, 209, 217)
+        DIM      = (58, 80, 96)
+        WHITE    = (240, 245, 250)
+
         # ── COVER PAGE ──
         pdf.add_page()
-        pdf.set_fill_color(15, 23, 42)
+        # Full dark background
+        pdf.set_fill_color(*BG_DARK)
         pdf.rect(0, 0, 210, 297, "F")
 
-        pdf.set_y(60)
-        pdf.set_font("Helvetica", "B", 28)
-        pdf.set_text_color(239, 68, 68)
-        pdf.cell(0, 14, "KUBERNETES ATTACK PATH", align="C", ln=True)
-        pdf.cell(0, 14, "VISUALIZER", align="C", ln=True)
+        # Diagonal accent stripe (top-right)
+        pdf.set_fill_color(*NEON)
+        pdf.rect(140, 0, 70, 3, "F")
+        pdf.rect(160, 6, 50, 1, "F")
 
-        pdf.ln(6)
-        pdf.set_font("Helvetica", "B", 14)
-        pdf.set_text_color(248, 250, 252)
-        pdf.cell(0, 10, "Kill Chain Security Report", align="C", ln=True)
-        pdf.ln(6)
+        # Diagonal accent stripe (bottom-left)
+        pdf.rect(0, 280, 60, 3, "F")
+        pdf.rect(0, 286, 40, 1, "F")
 
-        ts = datetime.datetime.now().strftime("%B %d, %Y  %H:%M:%S")
+        # Left accent bar
+        pdf.set_fill_color(*THREAT)
+        pdf.rect(20, 55, 3, 60, "F")
+
+        # Title block
+        pdf.set_y(58)
+        pdf.set_x(30)
+        pdf.set_font("Helvetica", "B", 32)
+        pdf.set_text_color(*NEON)
+        pdf.cell(0, 16, "KUBERUNNER", ln=True)
+
+        pdf.set_x(30)
         pdf.set_font("Helvetica", "", 11)
-        pdf.set_text_color(148, 163, 184)
-        pdf.cell(0, 8, f"Generated: {ts}", align="C", ln=True)
-        pdf.cell(0, 8, "Graph-Based Security Analysis for Cloud-Native Infrastructure", align="C", ln=True)
+        pdf.set_text_color(*DIM)
+        pdf.cell(0, 6, "THREAT TOPOLOGY ANALYZER  //  KILL CHAIN REPORT", ln=True)
 
-        pdf.ln(20)
+        # Thin separator
+        pdf.ln(4)
+        pdf.set_draw_color(*DIM)
+        pdf.line(30, pdf.get_y(), 180, pdf.get_y())
+        pdf.ln(6)
+
+        # Subtitle
+        pdf.set_x(30)
+        pdf.set_font("Helvetica", "B", 14)
+        pdf.set_text_color(*WHITE)
+        pdf.cell(0, 10, "Attack Path Analysis & Blast Radius Mapping", ln=True)
+
+        pdf.set_x(30)
+        pdf.set_font("Helvetica", "", 10)
+        pdf.set_text_color(*TEXT)
+        pdf.cell(0, 7, "Graph-Based Security Analysis for Cloud-Native Infrastructure", ln=True)
+
+        # Metadata block
+        ts = datetime.datetime.now().strftime("%B %d, %Y  %H:%M:%S")
+        pdf.ln(16)
+        pdf.set_x(30)
         pdf.set_font("Helvetica", "", 9)
-        pdf.set_text_color(100, 116, 139)
-        pdf.cell(0, 6, "Algorithms: BFS | Dijkstra | DFS | Critical Node | Betweenness Centrality | PageRank", align="C", ln=True)
-        pdf.cell(0, 6, "Framework: MITRE ATT&CK for Containers", align="C", ln=True)
-        pdf.cell(0, 6, "Classification: CONFIDENTIAL", align="C", ln=True)
+        pdf.set_text_color(*DIM)
+        pdf.cell(0, 5, f"GENERATED    {ts}", ln=True)
+        pdf.set_x(30)
+        pdf.cell(0, 5, "ENGINE       NetworkX 3.2  //  Dijkstra + BFS + DFS", ln=True)
+        pdf.set_x(30)
+        pdf.cell(0, 5, "FRAMEWORK    MITRE ATT&CK for Containers", ln=True)
+        pdf.set_x(30)
+        pdf.cell(0, 5, "ALGORITHMS   Dijkstra | BFS | DFS | Centrality | PageRank", ln=True)
+
+        # Classification badge
+        pdf.ln(20)
+        pdf.set_x(30)
+        pdf.set_fill_color(*THREAT)
+        pdf.set_font("Helvetica", "B", 8)
+        pdf.set_text_color(255, 255, 255)
+        pdf.cell(50, 7, "  CLASSIFICATION: CONFIDENTIAL", fill=True, ln=True)
 
         # ── TABLE OF CONTENTS ──
         pdf.add_page()
-        pdf.set_fill_color(255, 255, 255)
+        pdf.set_fill_color(*BG_DARK)
         pdf.rect(0, 0, 210, 297, "F")
-        pdf.set_fill_color(15, 23, 42)
-        pdf.rect(0, 0, 210, 16, "F")
-        pdf.set_font("Helvetica", "B", 10)
-        pdf.set_text_color(248, 250, 252)
-        pdf.set_y(4)
-        pdf.cell(0, 8, "  TABLE OF CONTENTS", ln=True)
-        pdf.ln(8)
 
-        pdf.set_font("Helvetica", "", 10)
-        pdf.set_text_color(15, 23, 42)
+        # Top accent
+        pdf.set_fill_color(*NEON)
+        pdf.rect(0, 0, 210, 2, "F")
+
+        pdf.set_y(14)
+        pdf.set_font("Helvetica", "B", 16)
+        pdf.set_text_color(*NEON)
+        pdf.cell(0, 10, "  CONTENTS", ln=True)
+        pdf.ln(4)
+
         toc = [
-            "Graph Statistics",
-            "Section 1: Attack Path Analysis (Dijkstra)",
-            "Section 2: Blast Radius Analysis (BFS)",
-            "Section 3: Circular Permission Detection (DFS)",
-            "Section 4: Critical Node Identification",
-            "Section 5: MITRE ATT&CK Mapping",
-            "Section 6: Advanced Graph Analytics",
-            "Section 7: Remediation Plan",
-            "Section 8: Namespace Isolation Audit",
+            ("00", "Graph Statistics"),
+            ("01", "Attack Path Analysis (Dijkstra)"),
+            ("02", "Blast Radius Analysis (BFS)"),
+            ("03", "Circular Permission Detection (DFS)"),
+            ("04", "Critical Node Identification"),
+            ("05", "MITRE ATT&CK Mapping"),
+            ("06", "Advanced Graph Analytics"),
+            ("07", "Remediation Plan"),
+            ("08", "Namespace Isolation Audit"),
         ]
-        for i, title in enumerate(toc):
-            pdf.cell(0, 8, f"  {i}. {title}", ln=True)
+        for num, title in toc:
+            pdf.set_fill_color(*PANEL)
+            pdf.set_x(15)
+            # Accent dot
+            pdf.set_fill_color(*NEON)
+            pdf.rect(15, pdf.get_y() + 3, 2, 2, "F")
+            pdf.set_x(22)
+            pdf.set_font("Helvetica", "B", 9)
+            pdf.set_text_color(*AMBER)
+            pdf.cell(12, 8, num)
+            pdf.set_font("Helvetica", "", 9)
+            pdf.set_text_color(*TEXT)
+            pdf.cell(0, 8, title, ln=True)
 
-        pdf.ln(10)
-        pdf.set_font("Helvetica", "I", 9)
-        pdf.set_text_color(100, 116, 139)
-        pdf.cell(0, 6, "  Appendices: Attack Simulation, Security Scorecard (available via CLI)", ln=True)
+        pdf.ln(12)
+        pdf.set_x(22)
+        pdf.set_font("Helvetica", "I", 8)
+        pdf.set_text_color(*DIM)
+        pdf.cell(0, 6, "Appendices: Attack Simulation  |  Security Scorecard  |  Temporal Analysis", ln=True)
 
         # ── CONTENT PAGES ──
         pdf.add_page()
-        pdf.set_fill_color(255, 255, 255)
+        pdf.set_fill_color(*BG_DARK)
         pdf.rect(0, 0, 210, 297, "F")
-        pdf.set_fill_color(15, 23, 42)
-        pdf.rect(0, 0, 210, 16, "F")
-        pdf.set_font("Helvetica", "B", 10)
-        pdf.set_text_color(248, 250, 252)
-        pdf.set_y(4)
-        pdf.cell(0, 8, "  KILL CHAIN ANALYSIS - DETAILED FINDINGS", ln=True)
+
+        # Top bar
+        pdf.set_fill_color(*PANEL)
+        pdf.rect(0, 0, 210, 14, "F")
+        pdf.set_fill_color(*THREAT)
+        pdf.rect(0, 14, 210, 1, "F")
+
+        pdf.set_font("Helvetica", "B", 9)
+        pdf.set_text_color(*NEON)
+        pdf.set_y(3)
+        pdf.cell(0, 8, "    KUBERUNNER  //  DETAILED FINDINGS", ln=True)
         pdf.ln(4)
 
         pdf.set_font("Courier", "", 7)
-        pdf.set_text_color(15, 23, 42)
+        pdf.set_text_color(*TEXT)
 
         for raw in plain.split("\n"):
             line = raw.rstrip()
 
+            # Section headers — neon accent bar
             if line.strip().startswith("[SECTION") or line.strip().startswith("[GRAPH"):
-                pdf.ln(2)
+                pdf.ln(3)
+                # Left accent bar
+                y_pos = pdf.get_y()
+                pdf.set_fill_color(*NEON)
+                pdf.rect(10, y_pos, 2, 6, "F")
+                # Header background
+                pdf.set_fill_color(*PANEL)
                 pdf.set_font("Helvetica", "B", 8)
-                pdf.set_fill_color(226, 232, 240)
-                pdf.set_text_color(15, 23, 42)
-                pdf.cell(0, 6, f"  {line.strip()}", ln=True, fill=True)
+                pdf.set_text_color(*NEON)
+                pdf.set_x(14)
+                pdf.cell(186, 6, f"  {line.strip()}", ln=True, fill=True)
                 pdf.set_font("Courier", "", 7)
-                pdf.set_text_color(30, 30, 30)
+                pdf.set_text_color(*TEXT)
                 continue
 
+            # Divider lines
             if line.strip().startswith("=") or line.strip().startswith("-"):
-                pdf.set_draw_color(203, 213, 225)
-                pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+                pdf.set_draw_color(*DIM)
+                pdf.line(12, pdf.get_y(), 198, pdf.get_y())
                 pdf.ln(1)
                 continue
 
+            # WARNING lines — threat red highlight
             if "WARNING" in line or "[!!]" in line:
                 pdf.set_font("Helvetica", "B", 8)
-                pdf.set_fill_color(254, 226, 226)
-                pdf.set_text_color(185, 28, 28)
+                pdf.set_fill_color(50, 10, 20)
+                pdf.set_text_color(*THREAT)
                 pdf.cell(0, 6, f"  {line.strip()}", ln=True, fill=True)
                 pdf.set_font("Courier", "", 7)
-                pdf.set_text_color(30, 30, 30)
+                pdf.set_text_color(*TEXT)
                 continue
 
+            # OK lines — neon green
             if "[OK]" in line:
                 pdf.set_font("Helvetica", "", 7)
-                pdf.set_text_color(21, 128, 61)
+                pdf.set_text_color(*NEON)
                 pdf.cell(0, 4, f"  {line.strip()}", ln=True)
                 pdf.set_font("Courier", "", 7)
-                pdf.set_text_color(30, 30, 30)
+                pdf.set_text_color(*TEXT)
                 continue
 
+            # RECOMMENDATION — amber
             if "RECOMMENDATION" in line:
                 pdf.set_font("Helvetica", "B", 8)
-                pdf.set_text_color(30, 64, 175)
+                pdf.set_text_color(*AMBER)
                 pdf.multi_cell(0, 4, f"  {line.strip()}")
                 pdf.set_font("Courier", "", 7)
-                pdf.set_text_color(30, 30, 30)
+                pdf.set_text_color(*TEXT)
                 continue
 
+            # MITRE technique IDs — cyan
             if "Technique" in line and "T1" in line:
                 pdf.set_font("Courier", "B", 7)
-                pdf.set_text_color(6, 95, 70)
+                pdf.set_text_color(*CYAN)
                 pdf.cell(0, 4, _clean(line), ln=True)
                 pdf.set_font("Courier", "", 7)
-                pdf.set_text_color(30, 30, 30)
+                pdf.set_text_color(*TEXT)
                 continue
 
+            # Normal text
             if len(line) > 105:
                 for wrapped in textwrap.wrap(line, 100):
                     pdf.cell(0, 3.5, _clean(wrapped), ln=True)
@@ -523,10 +605,13 @@ class Reporter:
                 pdf.cell(0, 3.5, _clean(line), ln=True)
 
         # Footer
-        pdf.set_y(-20)
-        pdf.set_font("Helvetica", "I", 6)
-        pdf.set_text_color(148, 163, 184)
-        pdf.cell(0, 4, "K8s Attack Path Visualizer | Confidential Security Report | Do Not Distribute", align="C", ln=True)
+        pdf.set_y(-18)
+        pdf.set_draw_color(*DIM)
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.ln(2)
+        pdf.set_font("Helvetica", "", 6)
+        pdf.set_text_color(*DIM)
+        pdf.cell(0, 4, "KUBERUNNER  //  Threat Topology Analyzer  //  Confidential  //  Do Not Distribute", align="C", ln=True)
 
         pdf.output(output_file)
         print(f"  {_OK}[+] PDF Kill Chain Report: {output_file}{_RS}")

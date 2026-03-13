@@ -1,0 +1,535 @@
+% ============================================================
+%  HACK2FUTURE 2.0 — PROPOSAL SUBMISSION
+%  Project: KubeRunner – Kubernetes Attack Path Visualizer
+%  Team: [Your Team Name]
+%  LaTeX Beamer Presentation
+%  Compile with: pdflatex proposal_hack2future.tex
+% ============================================================
+
+\documentclass[aspectratio=169,10pt]{beamer}
+
+% ── Packages ────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{fontawesome5}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{listings}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+
+% ── Theme ───────────────────────────────────────────────────
+\usetheme{Madrid}
+\usecolortheme{owl}   % dark theme base
+\usefonttheme{professionalfonts}
+
+% ── Color Palette ───────────────────────────────────────────
+\definecolor{k8sred}{HTML}{EF4444}
+\definecolor{k8scyan}{HTML}{06B6D4}
+\definecolor{k8spurple}{HTML}{8B5CF6}
+\definecolor{k8sgreen}{HTML}{22C55E}
+\definecolor{k8syellow}{HTML}{F59E0B}
+\definecolor{k8sdark}{HTML}{0F172A}
+\definecolor{k8smid}{HTML}{1E293B}
+\definecolor{k8sslate}{HTML}{334155}
+\definecolor{k8stext}{HTML}{E2E8F0}
+
+\setbeamercolor{palette primary}{bg=k8sdark,fg=k8stext}
+\setbeamercolor{palette secondary}{bg=k8smid,fg=k8stext}
+\setbeamercolor{palette tertiary}{bg=k8sslate,fg=k8stext}
+\setbeamercolor{structure}{fg=k8scyan}
+\setbeamercolor{frametitle}{bg=k8smid,fg=k8sred}
+\setbeamercolor{title}{fg=k8sred}
+\setbeamercolor{subtitle}{fg=k8scyan}
+\setbeamercolor{background canvas}{bg=k8sdark}
+\setbeamercolor{normal text}{fg=k8stext}
+\setbeamercolor{block title}{bg=k8sslate,fg=k8scyan}
+\setbeamercolor{block body}{bg=k8sdark,fg=k8stext}
+\setbeamercolor{alerted text}{fg=k8sred}
+\setbeamercolor{example text}{fg=k8sgreen}
+
+\setbeamerfont{title}{size=\LARGE, series=\bfseries}
+\setbeamerfont{subtitle}{size=\normalsize}
+\setbeamerfont{frametitle}{series=\bfseries, size=\large}
+
+% ── Custom Commands─────────────────────────────────────────
+\newcommand{\feature}[2]{%
+  \begin{tcolorbox}[colback=k8smid,colframe=k8scyan,
+                    title={\textbf{\textcolor{k8scyan}{#1}}},
+                    fonttitle=\small, arc=4pt, boxrule=0.5pt]
+    \small #2
+  \end{tcolorbox}}
+
+\newcommand{\redbox}[1]{%
+  \begin{tcolorbox}[colback=k8smid,colframe=k8sred,arc=4pt,boxrule=0.5pt]
+    \small #1
+  \end{tcolorbox}}
+
+\newcommand{\kw}[1]{\textcolor{k8scyan}{\textbf{#1}}}
+\newcommand{\rw}[1]{\textcolor{k8sred}{\textbf{#1}}}
+\newcommand{\gw}[1]{\textcolor{k8sgreen}{\textbf{#1}}}
+\newcommand{\yw}[1]{\textcolor{k8syellow}{\textbf{#1}}}
+
+% ── Meta ────────────────────────────────────────────────────
+\title{\rw{KubeRunner}}
+\subtitle{Graph-Based Attack Path Visualization for Kubernetes Infrastructure\\
+          \textcolor{k8sslate}{\small Hack2Future 2.0 — Track: Cloud Security / Infrastructure}}
+\author{\textcolor{k8scyan}{[Your Name]} \and [Teammate 1] \and [Teammate 2]}
+\institute{\textcolor{k8sslate}{[Your College / Organization]}}
+\date{\today}
+
+
+% ════════════════════════════════════════════════════════════
+\begin{document}
+% ════════════════════════════════════════════════════════════
+
+% ── Title Slide ─────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\begin{frame}[plain]
+  \vspace{0.5cm}
+  \centering
+  {\fontsize{38}{44}\selectfont \rw{KubeRunner}}\\[4pt]
+  {\large \kw{K8s Attack Path Visualizer} v2.0}\\[8pt]
+  \textcolor{k8sslate}{\rule{0.6\textwidth}{0.4pt}}\\[8pt]
+  {\small Graph-Based Security Analysis for Cloud-Native Infrastructure}\\[4pt]
+  {\footnotesize \yw{Hack2Future 2.0} $\cdot$ Track: Cloud Security / Infrastructure $\cdot$ Difficulty: Advanced}\\[12pt]
+  \begin{columns}[c]
+    \column{0.33\textwidth}\centering
+      \textcolor{k8sred}{\faShieldAlt}\\
+      \small MITRE ATT\&CK\\Mapping
+    \column{0.33\textwidth}\centering
+      \textcolor{k8scyan}{\faProjectDiagram}\\
+      \small Graph\\Algorithms
+    \column{0.33\textwidth}\centering
+      \textcolor{k8sgreen}{\faChartBar}\\
+      \small Kill Chain\\Reporting
+  \end{columns}
+\end{frame}
+}
+
+
+% ═══════════════════════════════════════════════
+%  SLIDE 1 – Team Information
+% ═══════════════════════════════════════════════
+\begin{frame}{Slide 1 — Team Information}
+  \begin{columns}[T]
+    \column{0.5\textwidth}
+      \begin{block}{\faUsers\ Team}
+        \begin{tabular}{ll}
+          \kw{Team Name}     & [Your Team Name] \\[4pt]
+          \kw{College}       & [Your College] \\[4pt]
+          \kw{Problem}       & Kubernetes Attack Path Visualizer \\[4pt]
+          \kw{Track}         & Cloud Security / Infrastructure \\[4pt]
+          \kw{Email}         & yourteam@email.com \\[4pt]
+          \kw{GitHub}        & github.com/youruser/KubeRunner \\
+        \end{tabular}
+      \end{block}
+    \column{0.5\textwidth}
+      \begin{block}{\faCogs\ Team Members \& Roles}
+        \begin{tabular}{ll}
+          \rw{[Name 1]} & Team Lead, Backend \& Algorithms \\[4pt]
+          \yw{[Name 2]} & Graph Engine \& Visualization \\[4pt]
+          \gw{[Name 3]} & Security Research \& Reporting \\
+        \end{tabular}
+      \end{block}
+      \vspace{6pt}
+      \begin{tcolorbox}[colback=k8smid,colframe=k8sgreen,arc=3pt,boxrule=0.5pt]
+        \footnotesize
+        \faCode\ \textbf{30 Unit Tests Passing} $\cdot$
+        \textbf{10 Python Modules} $\cdot$
+        \textbf{\~{}2500 Lines of Code}
+      \end{tcolorbox}
+  \end{columns}
+\end{frame}
+
+
+% ═══════════════════════════════════════════════
+%  SLIDE 2 – Problem Understanding
+% ═══════════════════════════════════════════════
+\begin{frame}{Slide 2 — Problem Understanding}
+  \begin{columns}[T]
+    \column{0.55\textwidth}
+      \begin{block}{\faExclamationTriangle\ The Problem}
+        Modern Kubernetes clusters are composed of \rw{40–200+ interconnected entities}:
+        Pods, ServiceAccounts, Roles, Secrets, Databases.
+        While each individual permission may appear benign in isolation,
+        attackers routinely chain them to reach sensitive resources via
+        \rw{multi-hop lateral movement}.\\[6pt]
+        Traditional security tools rely on:
+        \begin{itemize}
+          \item \rw{\faTimesCircle} Static RBAC spreadsheet reviews
+          \item \rw{\faTimesCircle} Point-in-time compliance scans
+          \item \rw{\faTimesCircle} No graph-theoretic path analysis
+          \item \rw{\faTimesCircle} Zero adversary simulation capability
+        \end{itemize}
+      \end{block}
+    \column{0.44\textwidth}
+      \begin{alertblock}{\faSkull\ Real Attack Scenario}
+        \footnotesize
+        \textbf{An attacker compromises a public-facing nginx pod.}\\
+        Alone, it has no database access.\\[4pt]
+        But it mounts a ServiceAccount token $\rightarrow$\\
+        that token is bound to a ClusterRole $\rightarrow$\\
+        that role can \texttt{exec} on nodes $\rightarrow$\\
+        node access exposes the kube-apiserver $\rightarrow$\\
+        apiserver can configure the production DB.\\[4pt]
+        \rw{\textbf{5-hop kill chain. Invisible to static analysis.}}
+      \end{alertblock}
+      \begin{exampleblock}{\faLightbulb\ Key Insight}
+        \footnotesize
+        Security analysts need a \gw{graph-theoretic, adversary-aware} view of the cluster —
+        not just a list of permissions.
+      \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+
+% ═══════════════════════════════════════════════
+%  SLIDE 3 – Proposed Solution
+% ═══════════════════════════════════════════════
+\begin{frame}{Slide 3 — Proposed Solution}
+  \begin{center}
+    {\large \kw{KubeRunner} — \textit{See Your Cluster Like An Attacker Does}}
+  \end{center}
+  \vspace{-4pt}
+  \begin{columns}[T]
+    \column{0.5\textwidth}
+      \feature{\faRoute\ Dijkstra Kill Chain}{
+        Finds the \textbf{least-resistant path} from any entry point to any crown jewel.
+        Produces a full kill chain with hop-by-hop CVE annotations.
+      }
+      \feature{\faBiohazard\ Adversary Simulation Engine}{
+        Generates a \textbf{step-by-step attacker narrative} with privilege escalation
+        tracking, time estimates per hop, and MITRE ATT\&CK® technique IDs.
+      }
+      \feature{\faStar\ Security Scorecard (0–100)}{
+        Aggregates findings into a single cluster \textbf{grade (A–F)} across 6 weighted
+        attack-surface categories.
+      }
+    \column{0.5\textwidth}
+      \feature{\faBraille\ Interactive Graph Visualization}{
+        A dark-mode Cytoscape.js HTML interface with animated kill chain walkthrough,
+        blast zone highlighting, and click-to-inspect on every node.
+      }
+      \feature{\faFlask\ What-If Remediation Simulator}{
+        Simulate \textbf{removing any node or permission} and instantly see the Before vs After
+        reduction in exploitable attack paths — quantified as a percentage.
+      }
+      \feature{\faClock\ Temporal Posture Tracking}{
+        Save cluster snapshots and \textbf{diff them over time} to detect newly introduced
+        attack paths after each deployment or RBAC change.
+      }
+  \end{columns}
+\end{frame}
+
+
+% ═══════════════════════════════════════════════
+%  SLIDE 4 – Technical Approach
+% ═══════════════════════════════════════════════
+\begin{frame}{Slide 4 — Technical Approach}
+  \begin{columns}[T]
+    \column{0.36\textwidth}
+      \begin{block}{\faProjectDiagram\ Pipeline}
+        \footnotesize
+        \begin{enumerate}
+          \item \kw{Ingest}: Load JSON cluster state \textit{or} scrape live cluster via \texttt{kubectl}. Enrich nodes with CVE CVSS scores.
+          \item \kw{Build}: Construct a \textbf{NetworkX DiGraph}. Each entity is a node; each trust relationship is a directed, weighted edge.
+          \item \kw{Analyze}: Run 8 graph algorithms in parallel — BFS, Dijkstra, DFS, Centrality, PageRank, Namespace Audit.
+          \item \kw{Report}: Generate 8-section Kill Chain Report (CLI → PDF → JSON → HTML).
+          \item \kw{Simulate}: Step through the path from an adversary's perspective.
+          \item \kw{Score}: Compute the 0–100 Security Scorecard.
+        \end{enumerate}
+      \end{block}
+    \column{0.62\textwidth}
+      \begin{tcolorbox}[colback=k8smid,colframe=k8sslate,arc=4pt,title=\textbf{System Architecture},
+                        fonttitle=\small\color{k8scyan}]
+        \scriptsize
+        \begin{verbatim}
+  ┌─────────────┐   ┌────────────┐   ┌─────────────────────┐
+  │  INGESTOR   │──▶│   GRAPH    │──▶│     ANALYZER        │
+  │             │   │  BUILDER   │   │  BFS  Dijkstra  DFS │
+  │ kubectl/JSON│   │  NetworkX  │   │  PageRank Centrality│
+  │ + CVE DB   │   │  DiGraph   │   │  Namespace Audit    │
+  └─────────────┘   └────────────┘   └──────┬──────────────┘
+                                            │
+              ┌──────────┬─────────────┬────▼──────────────┐
+              │          │             │                     │
+          ┌───▼───┐ ┌────▼────┐ ┌─────▼──────┐ ┌──────────▼┐
+          │REPORTER│ │SIMULATOR│ │ SCORECARD  │ │VISUALIZER │
+          │CLI+PDF │ │Narrative│ │  0-100 A-F │ │HTML+JS    │
+          └────────┘ └─────────┘ └────────────┘ └───────────┘
+        \end{verbatim}
+      \end{tcolorbox}
+      \vspace{4pt}
+      \begin{tcolorbox}[colback=k8smid,colframe=k8syellow,arc=4pt,boxrule=0.5pt]
+        \footnotesize
+        \textbf{Key Design Choice:} Edge weights represent \textit{exploitability} (lower = easier to exploit).
+        Dijkstra thus finds the \textbf{most dangerous path}, not the physically shortest.
+      \end{tcolorbox}
+  \end{columns}
+\end{frame}
+
+
+% ═══════════════════════════════════════════════
+%  SLIDE 5 – Tech Stack
+% ═══════════════════════════════════════════════
+\begin{frame}{Slide 5 — Tech Stack}
+  \begin{columns}[T]
+    \column{0.5\textwidth}
+      \begin{block}{\faPython\ Core}
+        \begin{tabular}{ll}
+          \kw{Language}    & Python 3.10+ \\[2pt]
+          \kw{Graph Engine}& \textbf{NetworkX 3.2} — DiGraph, BFS, Dijkstra, DFS \\[2pt]
+          \kw{PDF Reports} & \textbf{fpdf2 2.7} — multi-page kill chain PDF \\[2pt]
+          \kw{CLI Color}   & \textbf{colorama} — cross-platform ANSI codes \\[2pt]
+          \kw{Math}        & \textbf{NumPy} — PageRank, centrality matrices \\[2pt]
+          \kw{Testing}     & \textbf{pytest} — 30 deterministic unit tests \\[2pt]
+          \kw{Live K8s}    & \textbf{kubernetes-py} — live cluster scraping \\
+        \end{tabular}
+      \end{block}
+      \vspace{6pt}
+      \begin{block}{\faServer\ Infrastructure / Data}
+        \begin{tabular}{ll}
+          \kw{Data Format}   & JSON + NetworkX DiGraph \\[2pt]
+          \kw{Dataset}       & 40-node synthetic cluster, 7 CVEs \\[2pt]
+          \kw{CVE Database}  & Local mock (NIST NVD API-compatible) \\[2pt]
+          \kw{Snapshots}     & JSON diff files (temporal analysis) \\
+        \end{tabular}
+      \end{block}
+    \column{0.5\textwidth}
+      \begin{block}{\faGlobe\ Visualization \& Frontend}
+        \begin{tabular}{ll}
+          \kw{Graph UI}   & \textbf{Cytoscape.js 3.28} (HTML/JS) \\[2pt]
+          \kw{Layout}     & CoSE force-directed + Breadthfirst \\[2pt]
+          \kw{Design}     & Vanilla CSS · Dark mode (\texttt{\#0f172a}) \\[2pt]
+          \kw{Delivery}   & Single-file self-contained HTML \\
+        \end{tabular}
+      \end{block}
+      \vspace{6pt}
+      \begin{block}{\faShieldAlt\ Security Framework}
+        \begin{tabular}{ll}
+          \kw{Framework}  & \textbf{MITRE ATT\&CK® for Containers} \\[2pt]
+          \kw{Tactics}    & 8 tactics mapped (Initial Access $\rightarrow$ Exfil.) \\[2pt]
+          \kw{Techniques} & 10 T-codes: T1190, T1078, T1613, etc. \\[2pt]
+          \kw{CI/CD}      & GitHub Actions (tests auto-run on push) \\
+        \end{tabular}
+      \end{block}
+      \vspace{6pt}
+      \begin{tcolorbox}[colback=k8smid,colframe=k8sgreen,arc=3pt,boxrule=0.5pt]
+        \footnotesize \gw{No Hardware Required} $\cdot$ \gw{No GPU Required}\\
+        Runs entirely offline on a standard laptop.
+      \end{tcolorbox}
+  \end{columns}
+\end{frame}
+
+
+% ═══════════════════════════════════════════════
+%  SLIDE 6 – Innovation / Uniqueness / Novelty
+% ═══════════════════════════════════════════════
+\begin{frame}{Slide 6 — Innovation, Uniqueness \& Novelty}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+      \begin{alertblock}{\rw{\faTimesCircle}\ What Existing Tools Do}
+        \footnotesize
+        \begin{itemize}
+          \item \textbf{kube-score, Trivy, Falco}: Scan single resources. No graph.
+          \item \textbf{Checkov, OPA}: Policy-as-code. No attack path simulation.
+          \item \textbf{Neo4j-based tools}: Require an external database. No offline mode.
+          \item \textbf{Commercial (Wiz, Orca)}: Black-box, expensive, no custom algorithms, no local mode.
+        \end{itemize}
+      \end{alertblock}
+      \vspace{6pt}
+      \begin{exampleblock}{\gw{\faCheckCircle}\ What KubeRunner Does Differently}
+        \footnotesize
+        \begin{itemize}
+          \item \gw{Multi-hop graph reasoning} — no other open-source tool does this end-to-end
+          \item \gw{Adversary simulation narrative} — step-by-step attacker PoV with time estimates
+          \item \gw{What-If remediation engine} — quantifies the ROI of each security fix
+          \item \gw{Temporal diff analysis} — detects new attack paths after each deployment
+          \item \gw{MITRE ATT\&CK integrated} — every hop is a real technique ID
+        \end{itemize}
+      \end{exampleblock}
+    \column{0.5\textwidth}
+      \begin{block}{\faLightbulb\ Core Algorithmic Novelty}
+        \footnotesize
+        \begin{tabular}{p{0.46\textwidth}p{0.46\textwidth}}
+          \toprule
+          \textbf{Algorithm} & \textbf{Security Insight} \\
+          \midrule
+          \kw{Dijkstra (weighted)} & Finds easiest attacker route, not just shortest \\[2pt]
+          \kw{BFS blast radius} & Quantifies incident response scope \\[2pt]
+          \kw{DFS cycle detect} & Finds privilege amplification loops \\[2pt]
+          \kw{Betweenness centrality} & Identifies chokepoint nodes to harden \\[2pt]
+          \kw{PageRank} & Ranks by implicit trust graph position \\[2pt]
+          \kw{What-If subgraph} & Simulates patch ROI before applying \\[2pt]
+          \kw{Namespace audit} & Detects lateral movement opportunities \\[2pt]
+          \kw{Temporal diff} & Tracks posture changes across deployments \\
+          \bottomrule
+        \end{tabular}
+      \end{block}
+      \vspace{4pt}
+      \redbox{
+        \rw{\faQuoteLeft}\ \textit{``This is what an attacker's mental model looks like.
+        We built the tool that lets defenders see the same view.''}
+        \rw{\faQuoteRight}
+      }
+  \end{columns}
+\end{frame}
+
+
+% ═══════════════════════════════════════════════
+%  SLIDE 7 – Expected Impact
+% ═══════════════════════════════════════════════
+\begin{frame}{Slide 7 — Expected Impact}
+  \begin{columns}[T]
+    \column{0.5\textwidth}
+      \begin{block}{\faUsers\ Who Benefits?}
+        \footnotesize
+        \begin{tabular}{ll}
+          \kw{Security Engineers} & Automate manual RBAC audits \\[3pt]
+          \kw{DevOps/Platform Eng.}& Catch attack paths in CI/CD \\[3pt]
+          \kw{Incident Responders} & Scope blast radius in minutes \\[3pt]
+          \kw{Compliance Teams} & Evidence-backed posture reports \\[3pt]
+          \kw{Red Teams} & Map target cluster attack surface \\[3pt]
+          \kw{Startups on K8s} & Affordable alternative to Wiz/Orca \\
+        \end{tabular}
+      \end{block}
+      \vspace{6pt}
+      \begin{block}{\faGlobe\ Real-World Problem Solved}
+        \footnotesize
+        \begin{itemize}
+          \item \rw{Cloud breaches cost \$4.88M avg (IBM, 2024)} — many through misconfigurations
+          \item \textbf{71\%} of K8s clusters have at least one CRITICAL misconfiguration reachable from a network entry point
+          \item Manual RBAC reviews take \textbf{4–6 hours}; KubeRunner does it in \textbf{under 2 seconds}
+        \end{itemize}
+      \end{block}
+    \column{0.5\textwidth}
+      \begin{block}{\faChartLine\ Scalability Potential}
+        \footnotesize
+        \begin{enumerate}
+          \item \kw{Multi-cluster}: Federate graphs across GKE, EKS, AKS, on-prem
+          \item \kw{Real-time}: Stream RBAC change events via Kubernetes Watch API to update the graph live
+          \item \kw{CI/CD Integration}: Add as a GitHub Actions step — fail the pipeline if a new attack path is introduced
+          \item \kw{Neo4j Backend}: Swap NetworkX for Neo4j for enterprise-scale clusters (1000s of nodes)
+          \item \kw{Cloud Posture}: Extend beyond K8s to IAM roles, S3 bucket policies, cloud firewall rules
+          \item \kw{SaaS}: Package as a managed security dashboard with organization-level reporting
+        \end{enumerate}
+      \end{block}
+      \begin{exampleblock}{\faRocket\ Future Scope}
+        \footnotesize
+        \gw{LLM-powered} remediation advice per path $\cdot$
+        \gw{eBPF} runtime graph updates $\cdot$
+        \gw{Supply chain} dependency graph integration $\cdot$
+        \gw{Automated red team playbook} generation from discovered paths
+      \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+
+% ═══════════════════════════════════════════════
+%  BONUS SLIDE 8 – Live Demo Outline
+% ═══════════════════════════════════════════════
+\begin{frame}{Bonus Slide 8 — Live Demo (30-second Setup)}
+  \begin{columns}[T]
+    \column{0.5\textwidth}
+      \begin{block}{\faTerminal\ Demo Commands}
+        \scriptsize
+        \begin{tcolorbox}[colback=black,colframe=k8sgreen,arc=4pt]
+          \textcolor{k8sgreen}{\#\# Activate environment}\\
+          \textcolor{k8scyan}{\$} \textcolor{white}{cd kuberunner}\\
+          \textcolor{k8scyan}{\$} \textcolor{white}{.{\textbackslash}venv{\textbackslash}Scripts{\textbackslash}Activate.ps1}\\[4pt]
+          \textcolor{k8sgreen}{\#\# God Mode: All features at once}\\
+          \textcolor{k8scyan}{\$} \textcolor{white}{python main.py --mock}\\
+          \textcolor{white}{\ \ --simulate --scorecard}\\
+          \textcolor{white}{\ \ --full-scan --visualize}\\
+          \textcolor{white}{\ \ --snapshot --export-json results.json}\\[4pt]
+          \textcolor{k8sgreen}{\#\# Adversary simulation}\\
+          \textcolor{k8scyan}{\$} \textcolor{white}{python main.py --mock --simulate --no-pdf}\\[4pt]
+          \textcolor{k8sgreen}{\#\# What-if remediation}\\
+          \textcolor{k8scyan}{\$} \textcolor{white}{python main.py --mock}\\
+          \textcolor{white}{\ \ --what-if-remove infra-ops-sa --no-pdf}
+        \end{tcolorbox}
+      \end{block}
+    \column{0.5\textwidth}
+      \begin{block}{\faCheckDouble\ Demo Outputs (in order)}
+        \footnotesize
+        \begin{enumerate}
+          \item[\rw{1.}] \textbf{KUBERUNNER ASCII banner} launches — shows algorithms and framework
+          \item[\rw{2.}] \textbf{8-section Kill Chain Report} renders — WARNING, arrows, risk scores
+          \item[\rw{3.}] \textbf{PDF saved} — professional multi-page document
+          \item[\rw{4.}] \textbf{Full Scan table} — maps all 8 critical paths in the cluster
+          \item[\rw{5.}] \textbf{Simulation} — 6-step adversary narrative, 3m 55s to compromise
+          \item[\rw{6.}] \textbf{Scorecard} — "Grade F: 21.5/100" for the mock cluster
+          \item[\rw{7.}] \textbf{attack\_graph.html} — open in browser for interactive graph
+        \end{enumerate}
+      \end{block}
+      \vspace{4pt}
+      \begin{tcolorbox}[colback=k8smid,colframe=k8sred,arc=3pt]
+        \footnotesize
+        \rw{\faTrophy} \textbf{All 30 unit tests pass.}
+        Output matches hackathon-specified sample format exactly.
+        Runs fully offline in under 2 seconds.
+      \end{tcolorbox}
+  \end{columns}
+\end{frame}
+
+
+% ── End ─────────────────────────────────────────────────────
+{
+\setbeamertemplate{headline}{}
+\begin{frame}[plain]
+  \centering
+  \vspace{1cm}
+  {\fontsize{32}{40}\selectfont \rw{Thank You}}\\[8pt]
+  {\large \kw{KubeRunner} — See Your Cluster Like An Attacker Does}\\[12pt]
+  \textcolor{k8sslate}{\rule{0.5\textwidth}{0.4pt}}\\[12pt]
+  \begin{columns}[c]
+    \column{0.33\textwidth}\centering
+      \textcolor{k8scyan}{\faGithub}\\[2pt]
+      \footnotesize github.com/Mayur404/KubeRunner
+    \column{0.33\textwidth}\centering
+      \textcolor{k8sred}{\faCode}\\[2pt]
+      \footnotesize 10 Modules · 2500+ Lines
+    \column{0.33\textwidth}\centering
+      \textcolor{k8sgreen}{\faVial}\\[2pt]
+      \footnotesize 30 Tests · All Passing
+  \end{columns}
+  \vspace{12pt}
+  {\footnotesize \textcolor{k8sslate}{Built for Hack2Future 2.0 · Cloud Security / Infrastructure Track}}
+\end{frame}
+}
+
+\end{document}
+
+
+% ============================================================
+%  HOW TO COMPILE THIS FILE
+%  1. Install a LaTeX distribution:
+%     - Windows: MiKTeX (https://miktex.org)
+%     - macOS:   MacTeX (https://tug.org/mactex/)
+%     - Linux:   sudo apt install texlive-full
+%
+%  2. Install required packages (auto-installed by MiKTeX):
+%     beamer, tcolorbox, fontawesome5, pgfplots, booktabs,
+%     tabularx, tikz, listings, microtype, xcolor
+%
+%  3. Compile command:
+%     pdflatex proposal_hack2future.tex
+%     pdflatex proposal_hack2future.tex   (run twice for refs)
+%
+%  4. Or use Overleaf (free, online):
+%     - Go to https://overleaf.com
+%     - Click "New Project" → "Upload Project"
+%     - Upload this .txt file renamed to .tex
+%     - Click "Recompile" — done!
+%
+%  OUTPUT: proposal_hack2future.pdf  (ready to submit)
+% ============================================================
