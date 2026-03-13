@@ -36,21 +36,44 @@ KubeRunner V1 is engineered from first principles entirely offline, requiring ze
 
 ## 🧠 2. Deep Dive: Data Architecture & Network Topology
 
-### The Graph Formulation
-The heart of KubeRunner is a highly optimized `NetworkX.DiGraph` (Directed Graph).
-- **Nodes (Vertices):** Represent K8s entities (`Pod`, `ServiceAccount`, `ClusterRole`, `Role`, `Secret`, `ConfigMap`, `Database`, `Service`, `User`, `Internet`).
-    - *Metadata Attributes:* `id`, `type`, `cve` (Common Vulnerability Enumeration), `cvss_score`, `namespace`, `is_crown_jewel`.
-- **Edges (Directed Links):** Represent the structural fabric of K8s RBAC and network routing topologies.
-    - *Topologies include:* `routes-traffic-to`, `uses-service-account`, `bound-to`, `can-exec-on-nodes`, `can-read`, `authenticates-to`.
+### The Data Model (JSON Schema v1.0)
+KubeRunner uses a standardized JSON intermediate representation (IR) to define the cluster state.
+
+#### 1. Node Types
+| Type | Description |
+|---|---|
+| `Internet` | Public internet entry points (LoadBalancers, External IPs) |
+| `Service` | Kubernetes Service objects (NodePort, ClusterIP) |
+| `Pod` | Active workloads and containers |
+| `ServiceAccount` | RBAC identities used by pods |
+| `Role` / `ClusterRole` | Permission sets (Namespace-scoped vs. Cluster-wide) |
+| `Secret` / `ConfigMap` | Data resources containing sensitive or configuration data |
+| `Database` | External managed services or databases |
+| `User` | Human IAM identities |
+
+#### 2. Relationship Types (Edges)
+| Relationship | Direction | Description |
+|---|---|---|
+| `routes-traffic-to` | Service → Pod | Network-layer connectivity |
+| `uses-service-account` | Pod → ServiceAccount | Identity association |
+| `bound-to` | SA → Role | RBAC role binding |
+| `can-read` / `can-write` | Role → Resource | Capability to view or modify data |
+| `can-exec` | User → Pod | Direct command execution access |
+| `can-impersonate` | Pod → SA | Identity impersonation capability |
+| `authenticates-to` | Secret → DB | Credential-based access |
+| `mounts-hostpath` | Pod → Resource | Insecure host filesystem access |
 
 ### The Secret Sauce: Exploitability Weights & CVSS Injection
 Standard pathfinding algorithms (like simple BFS) simply count the number of "hops." This is fatally flawed in cybersecurity because hopping through a misconfigured API is much easier than hopping through a hardened firewall. 
 
 KubeRunner revolutionizes this by using **Exploitability Weights**.
-- Every edge has an inherent **base difficulty weight** (e.g., standard assumed permissions = weight `1.0`; jumping isolated namespaces via a complex exploit sequence = weight `8.0`).
+- Every edge has an inherent **base difficulty weight** (e.g., standard RBAC binding = `1.0`; jumping isolated namespaces = `8.0`).
 - **CVSS Injection:** KubeRunner dynamically alters edge weights based on the destination node's CVEs. If a node has a highly exploitable, unpatched RCE vulnerability (CVSS 9.8), traversing to that node mathematically becomes "cheaper/easier" in the graph.
 
-**Result:** KubeRunner's Dijkstra solver finds the path with the *lowest total mathematical weight*, simulating an attacker’s **Optimal Least Resistance Protocol (OLRP)**, completely disregarding the geometrical shortest path if it is hardened.
+**Edge Weight Guidelines:**
+- **1.0 – 2.0:** Trivially exploitable (Standard RBAC, exec permission)
+- **3.0 – 5.0:** Moderately privileged (Network hop, indirect impersonation)
+- **8.0 – 9.9:** Critical CVE / Very high impact (RCE, privilege escalation)
 
 ---
 

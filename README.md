@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/python-3.10+-blue?logo=python&logoColor=white" alt="Python"/>
   <img src="https://img.shields.io/badge/algorithms-BFS%20%7C%20Dijkstra%20%7C%20DFS-red" alt="Algorithms"/>
   <img src="https://img.shields.io/badge/MITRE%20ATT%26CK-Containers-orange?logo=shield" alt="MITRE"/>
-  <img src="https://img.shields.io/badge/tests-30%20passed-brightgreen" alt="Tests"/>
+  <img src="https://img.shields.io/badge/tests-passed-brightgreen" alt="Tests"/>
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
 </p>
 
@@ -33,7 +33,7 @@
 | **Scoring** | Cluster security scorecard (0-100) · Letter grade · 6 weighted categories |
 | **Visualization** | Interactive Cytoscape.js graph · Animated attack walkthrough · Blast zone highlighting |
 | **Temporal** | Snapshot saving · Graph diffing · New attack path alerting |
-| **Output** | Coloured CLI report (8 sections) · PDF with cover page · JSON export · HTML graph |
+| **Output** | Coloured CLI report (8 sections) · SOC-style PDF · JSON export · HTML graph |
 
 ---
 
@@ -50,7 +50,7 @@
 ## 🚀 Quick Start
 
 ```bash
-# Clone the repo
+# Clone and enter
 git clone https://github.com/yourusername/k8s-attack-visualizer.git
 cd k8s-attack-visualizer
 
@@ -62,37 +62,40 @@ python -m venv venv
 # Install dependencies
 pip install -r requirements.txt
 
-# Run with mock data (no Kubernetes cluster needed)
-python main.py --mock
+# LAUNCH THE INTERACTIVE CONTROL CENTER
+python main.py
 ```
 
-### Demo Commands
+---
 
-```bash
-# Full 8-section Kill Chain Report + PDF
-python main.py --mock
+## 🛰️ Interactive Control Center
 
-# Attack simulation from adversary perspective
-python main.py --mock --simulate
+<p align="center">
+  <img src="docs/cli_dashboard.png" alt="CLI Dashboard" width="700"/>
+</p>
 
-# Cluster security scorecard (0-100 grade)
-python main.py --mock --scorecard
+KubeRunner features a **Target Control Center** — a premium terminal-based dashboard that eliminates the need for complex CLI flags. Just run `python main.py` and manage your entire security pipeline:
 
-# What-if: simulate removing a permission
-python main.py --mock --what-if-remove infra-sa --no-pdf
+- **Toggle Mode:** Switch between Mock and Live clusters.
+- **Run Pipeline:** Initialize ingestion, analysis, and scoring with one keypress.
+- **Explore Results:** Trigger visualizer, generate PDF, or run simulations directly from the menu.
+- **Goated Aesthetics:** High-contrast ANSI colors, emojis, and status indicators.
 
-# Interactive browser visualization
-python main.py --mock --visualize
+---
 
-# Full attack surface scan (all entry × crown jewel pairs)
-python main.py --mock --full-scan
+## 🎨 Premium Visualizer (Cyberpunk SOC Mode)
 
-# Export machine-readable JSON
-python main.py --mock --export-json results.json
+The HTML visualizer has been redesigned from the ground up with a **Military-Grade Security Operations Center (SOC)** aesthetic:
 
-# Run everything at once
-python main.py --mock --simulate --scorecard --visualize
-```
+- **Visuals:** Scanline overlays, glitch animations, and a hexagonal grid background.
+- **Typography:** Orbitron and JetBrains Mono for a high-tech technical feel.
+- **Interactivity:** "Simulate Attack" hop-by-hop animations and "Blast Radius" highlighting.
+- **Metrics:** Pulsing status bar with real-time node/edge/path counts.
+
+### 📸 Visualizer Preview
+<p align="center">
+  <img src="docs/visualization.png" alt="Cyberpunk SOC Visualizer" width="800"/>
+</p>
 
 ---
 

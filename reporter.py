@@ -47,6 +47,47 @@ def _clean(text: str) -> str:
              .decode("latin-1")
 
 
+class SOC_PDF(FPDF):
+    """Custom FPDF subclass to ensure consistent SOC aesthetic on every page."""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.bg_color = (5, 10, 14)       # BG_DARK
+        self.panel_color = (10, 16, 24)    # PANEL
+        self.neon_color = (0, 255, 157)    # NEON
+        self.threat_color = (255, 42, 109) # THREAT
+        self.dim_color = (58, 80, 96)      # DIM
+        self.text_color_def = (197, 209, 217) # TEXT
+
+    def header(self):
+        # Draw background on every page
+        self.set_fill_color(*self.bg_color)
+        self.rect(0, 0, 210, 297, "F")
+        
+        # For pages > 2 (Content pages), draw the top technical banner
+        if self.page_no() > 2:
+            self.set_fill_color(*self.panel_color)
+            self.rect(0, 0, 210, 14, "F")
+            self.set_fill_color(*self.threat_color)
+            self.rect(0, 14, 210, 1, "F")
+            
+            self.set_font("Helvetica", "B", 9)
+            self.set_text_color(*self.neon_color)
+            self.set_y(3)
+            self.cell(0, 8, "    KUBERUNNER  //  DETAILED FINDINGS", ln=True)
+            self.ln(2)
+            self.set_y(22) # Ensure content starts below the banner
+
+    def footer(self):
+        # Standardised footer on every page
+        self.set_y(-15)
+        self.set_draw_color(*self.dim_color)
+        self.line(10, self.get_y(), 200, self.get_y())
+        self.set_y(-12)
+        self.set_font("Helvetica", "", 6)
+        self.set_text_color(*self.dim_color)
+        self.cell(0, 10, f"PAGE {self.page_no()}  //  THREAT TOPOLOGY ANALYZER  //  CONFIDENTIAL", align="C")
+
 # ---------------------------------------------------------------------------
 # Reporter
 # ---------------------------------------------------------------------------
@@ -369,7 +410,7 @@ class Reporter:
                          f"{self._lbl(v['target'])}")
         else:
             L.append(f"  {_OK}[OK] Strong namespace isolation.{_RS}")
-
+            
         L += ["", _THIN, ""]
         return L
 
@@ -383,11 +424,16 @@ class Reporter:
     ) -> None:
         """Render the Kill Chain Report as a professional multi-page PDF."""
         plain = _clean(report_text)
-        pdf = FPDF()
-        pdf.set_auto_page_break(auto=True, margin=15)
 
-        # Color constants
-        BG_DARK = (5, 10, 14)
+        # Use our custom SOC_PDF class
+        pdf = SOC_PDF()
+        pdf.set_auto_page_break(auto=True, margin=20)
+        pdf.alias_nb_pages()
+
+        # Color constants for local use
+        # These are still used for specific elements not handled by the SOC_PDF class's header/footer
+        # or for elements that need specific color overrides.
+        # BG_DARK is now handled by SOC_PDF.header()
         PANEL    = (10, 16, 24)
         NEON     = (0, 255, 157)
         THREAT   = (255, 42, 109)
@@ -399,9 +445,7 @@ class Reporter:
 
         # ── COVER PAGE ──
         pdf.add_page()
-        # Full dark background
-        pdf.set_fill_color(*BG_DARK)
-        pdf.rect(0, 0, 210, 297, "F")
+        # Header() handles BG_DARK automatically
 
         # Diagonal accent stripe (top-right)
         pdf.set_fill_color(*NEON)
@@ -469,9 +513,7 @@ class Reporter:
 
         # ── TABLE OF CONTENTS ──
         pdf.add_page()
-        pdf.set_fill_color(*BG_DARK)
-        pdf.rect(0, 0, 210, 297, "F")
-
+        # Header() handles background automatically
         # Top accent
         pdf.set_fill_color(*NEON)
         pdf.rect(0, 0, 210, 2, "F")
@@ -515,20 +557,7 @@ class Reporter:
 
         # ── CONTENT PAGES ──
         pdf.add_page()
-        pdf.set_fill_color(*BG_DARK)
-        pdf.rect(0, 0, 210, 297, "F")
-
-        # Top bar
-        pdf.set_fill_color(*PANEL)
-        pdf.rect(0, 0, 210, 14, "F")
-        pdf.set_fill_color(*THREAT)
-        pdf.rect(0, 14, 210, 1, "F")
-
-        pdf.set_font("Helvetica", "B", 9)
-        pdf.set_text_color(*NEON)
-        pdf.set_y(3)
-        pdf.cell(0, 8, "    KUBERUNNER  //  DETAILED FINDINGS", ln=True)
-        pdf.ln(4)
+        # Header() handles background and technical banner automatically
 
         pdf.set_font("Courier", "", 7)
         pdf.set_text_color(*TEXT)

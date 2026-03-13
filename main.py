@@ -165,7 +165,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     print(BANNER)
-    args = build_parser().parse_args()
+    parser = build_parser()
+    
+    # If no arguments provided (other than script name), launch interactive menu
+    if len(sys.argv) == 1:
+        run_interactive_menu()
+        return
+
+    args = parser.parse_args()
+    _run_pipeline(args)
+
+def _run_pipeline(args):
     use_mock = args.mock or not args.live
 
     # ---- 1. Ingest ----
@@ -406,6 +416,140 @@ def _what_if(analyzer, cg, args):
             route = ' -> '.join(rp)
             print(f"    {Fore.YELLOW}[!]{Style.RESET_ALL} {route}")
     print()
+
+
+# ---------------------------------------------------------------------------
+# Interactive Menu
+# ---------------------------------------------------------------------------
+
+def run_interactive_menu():
+    """Goated Interactive CLI Menu for KubeRunner."""
+    import os
+    
+    def clear(): 
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print(BANNER)
+
+    class MenuState:
+        def __init__(self):
+            self.use_mock = True
+            self.source = "public-internet"
+            self.target = "production-db"
+            self.blast_source = "webapp-frontend"
+            self.ingested = False
+            self.ingestor = None
+            self.data = None
+            self.cg = None
+            self.analyzer = None
+            self.reporter = None
+
+    state = MenuState()
+    
+    while True:
+        clear()
+        print(f"  {Fore.CYAN}{Style.BRIGHT}► INTERACTIVE CONTROL CENTER{Style.RESET_ALL}")
+        print(f"  {Style.DIM}{'─' * 40}{Style.RESET_ALL}")
+        
+        # Status indicators
+        ingest_status = f"{Fore.GREEN}Online{Style.RESET_ALL}" if state.ingested else f"{Fore.RED}Offline{Style.RESET_ALL}"
+        env_mode = f"{Fore.YELLOW}MOCK DATASET{Style.RESET_ALL}" if state.use_mock else f"{Fore.GREEN}LIVE CLUSTER{Style.RESET_ALL}"
+        
+        print(f"  {Style.BRIGHT}Pipeline Status:{Style.RESET_ALL} {ingest_status}")
+        print(f"  {Style.BRIGHT}Target Environment:{Style.RESET_ALL} {env_mode}")
+        if state.ingested:
+            print(f"  {Style.BRIGHT}Current Target:{Style.RESET_ALL} {state.source} -> {state.target}")
+        print(f"  {Style.DIM}{'─' * 40}{Style.RESET_ALL}\n")
+
+        options = [
+            ("1", f"🛰️  Toggle Mode: {env_mode}"),
+            ("2", "🕸️  Analyze & Display Kill Chain Report"),
+            ("3", "📄  Generate PDF Report"),
+            ("4", "🎨  Generate HTML Visualizer"),
+            ("0", "🚪  Exit Dashboard")
+        ]
+
+        for num, desc in options:
+            print(f"    {Fore.CYAN}{num:>2}.{Style.RESET_ALL} {desc}")
+
+        print(f"\n  {Fore.YELLOW}┌───(kuberunner@core)─[~]{Style.RESET_ALL}")
+        choice = input(f"  {Fore.YELLOW}└─$ {Style.RESET_ALL}").strip()
+
+        if choice == "0":
+            print(f"\n  {Fore.GREEN}Exiting. Stay secure operator.{Style.RESET_ALL}\n")
+            break
+
+        if choice == "1":
+            state.use_mock = not state.use_mock
+            state.ingested = False
+            continue
+
+        # Auto-ingest if not done for options 2, 3, 4
+        if choice in ["2", "3", "4"] and not state.ingested:
+            log_step("INGEST", f"Initializing {'Mock' if state.use_mock else 'Live'} Cluster Data")
+            state.ingestor = KubernetesIngestor(use_mock=state.use_mock)
+            state.data = state.ingestor.load_data()
+            state.cg = ClusterGraph(state.data)
+            state.analyzer = SecurityAnalyzer(state.cg.graph)
+            state.reporter = Reporter(state.analyzer, state.cg.graph)
+            state.ingested = True
+
+        if choice == "2":
+            clear()
+            print(f"\n  {Style.BRIGHT}{Fore.WHITE}Sample Output — Kill Chain Report{Style.RESET_ALL}")
+            print(f"  {Style.DIM}{'─' * 40}{Style.RESET_ALL}")
+            
+            # Find path
+            path, score = state.analyzer.shortest_path_dijkstra(state.source, state.target)
+            if path:
+                print(f"  {Fore.RED}{Style.BRIGHT}⚠ WARNING: Attack Path Detected{Style.RESET_ALL}")
+                print(f"  User '{state.source}' can reach '{state.target}' via:")
+                
+                if len(path) >= 2:
+                    # First line: Source -> Hop 2
+                    n1 = state.cg.graph.nodes[path[0]]['name']
+                    n2_node = state.cg.graph.nodes[path[1]]
+                    n2 = n2_node['name']
+                    cve2 = f" ({n2_node['cve']}, CVSS {n2_node['risk_score']})" if n2_node.get('cve') else ""
+                    print(f"  {n1} → {n2}{cve2}")
+                    
+                    # Subsequent lines
+                    for node_id in path[2:]:
+                        node = state.cg.graph.nodes[node_id]
+                        cve = f" ({node['cve']}, CVSS {node['risk_score']})" if node.get('cve') else ""
+                        print(f"  → {node['name']}{cve}")
+                else:
+                    print(f"  → {state.source}")
+
+                severity = "CRITICAL" if score > 30 else "HIGH" if score > 15 else "MEDIUM"
+                color = Fore.RED if severity == "CRITICAL" else Fore.YELLOW
+                print(f"\n  {Style.BRIGHT}Total Hops: {len(path)-1} | Path Risk Score: {color}{score:.1f} ({severity}){Style.RESET_ALL}")
+            
+            # Blast Radius
+            blast = state.analyzer.blast_radius_bfs(state.blast_source, 3)
+            blast_count = sum(len(nodes) for nodes in blast.values())
+            print(f"  {Fore.GREEN}✓{Style.RESET_ALL} Blast Radius of {state.blast_source}: {Fore.CYAN}{blast_count}{Style.RESET_ALL} resources within 3 hops")
+            
+            # Cycles
+            cycles = state.analyzer.detect_circular_permissions_dfs()
+            if cycles:
+                c = cycles[0]
+                cycle_str = f"{c[0]} ↔ {c[1]}"
+                print(f"  {Fore.GREEN}✓{Style.RESET_ALL} Cycles Detected: {Fore.CYAN}{len(cycles)}{Style.RESET_ALL} ({cycle_str} mutual admin grant)")
+            else:
+                print(f"  {Fore.GREEN}✓{Style.RESET_ALL} No privilege cycles detected.")
+                
+            input(f"\n  {Fore.CYAN}Press Enter to return to Control Center.{Style.RESET_ALL}")
+
+        elif choice == "3":
+            report = state.reporter.generate_cli_report(state.source, state.target, state.blast_source)
+            state.reporter.generate_pdf_report(report)
+            input(f"\n  {Fore.CYAN}[+] PDF Generated. Press Enter to return.{Style.RESET_ALL}")
+
+        elif choice == "4":
+            from visualizer import generate_visualization
+            path = generate_visualization(state.cg.graph, state.analyzer, state.source, state.target, state.blast_source)
+            log_success(f"Visualizer ready: {path}")
+            input(f"\n  {Fore.CYAN}[+] Visualizer ready. Press Enter to return.{Style.RESET_ALL}")
 
 
 if __name__ == "__main__":

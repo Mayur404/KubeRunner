@@ -27,19 +27,22 @@ We built an engine leveraging Python and **NetworkX** to ingest live Kubernetes 
 
 When KubeRunner runs **Dijkstra’s Algorithm**, it mathematically outputs the **Optimal Least Resistance Path (OLRP)**—the exact, easiest route an attacker will take.
 
-### B. The 5 Core Algorithms
+### B. The 8 Core Algorithms
 KubeRunner runs a parallel, sub-second gauntlet of classical computer science algorithms:
 1. **Dijkstra's Kill Chain:** Finds the easiest path from Public Internet to your Crown Jewels.
 2. **BFS Blast Radius:** Maps exactly how far an attacker can reach if one specific Pod is breached.
 3. **DFS Cycle Detection:** Finds "Infinite Privilege Amplification" loops in IAM policies.
-4. **Betweenness Centrality:** Identifies the "Bridge" nodes that attackers must cross to reach production.
-5. **What-If Subgraph Sandbox:** Clones the graph in memory, hypothetically deletes a RoleBinding, and mathematically recalculates Dijkstra to prove if the patch works *before* deploying to production.
+4. **Critical Node Identification:** Identifies the single permission that, if removed, breaks the most kill chains.
+5. **Betweenness Centrality:** Identifies the "Bridge" nodes that attackers must cross to reach production.
+6. **PageRank Significance:** Ranks nodes by implicit trust and relationship density.
+7. **Namespace Isolation Audit:** Detects segmentation violations where trust crosses security boundaries.
+8. **What-If Subgraph Sandbox:** Clones the graph in memory, hypothetically deletes a permission, and mathematically proves the reduction in attack surface *before* you touch production.
 
 ### C. The Results (UX & Deliverables)
-From the math, our Python backend generates three jaw-dropping deliverables:
-1. **The Adversary Narrative:** A step-by-step English story mapping the attack to MITRE ATT&CK techniques (e.g., *"Step 2: Attacker reads /var/run/secrets. Time: ~30s. Privilege Gained: API-Auth"*).
-2. **The 0-100 Scorecard:** A weighted A-F grading system for the CISO.
-3. **Interactive Graph UI:** An offline-capable, interactive visual HTML canvas (built with *Cytoscape.js*) showing the cluster physically and highlighting the kill chain in neon red.
+From the math, our Python backend generates three professional deliverables:
+1. **Interactive Control Center:** A premium terminal-based dashboard (`main.py`) to manage the entire pipeline without complex CLI flags.
+2. **The Cyberpunk Visualizer:** An offline-capable, interactive visual HTML canvas (built with *Cytoscape.js*) with scanline overlays, glitch animations, and real-time threat metrics.
+3. **Military-Grade PDF Report:** A professional, multi-page security audit with dark-mode formatting, MITRE ATT&CK mapping, and executive scorecards.
 
 ---
 
