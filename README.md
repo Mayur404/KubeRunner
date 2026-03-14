@@ -91,7 +91,7 @@ KubeRunner features a **Target Control Center** — a premium terminal-based das
 
 ### 📸 Visualizer Preview
 <p align="center">
-  <img src="docs/visualization.png" alt="Cyberpunk SOC Visualizer" width="800"/>
+  <img src="docs/vis1.png" alt="Cyberpunk SOC Visualizer" width="800"/>
 </p>
 
 ##  Kill Chain Report PDF
