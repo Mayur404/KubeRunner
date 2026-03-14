@@ -1,3 +1,6 @@
+
+## Architecture Diagram
+
 <p align="center">
   <img src="docs/architecture.png" alt="Architecture" width="700"/>
 </p>
@@ -8,13 +11,6 @@
   <strong>Graph-Based Security Analysis for Cloud-Native Infrastructure</strong>
 </p>
 
-<p align="center">
-  <img src="https://img.shields.io/badge/python-3.10+-blue?logo=python&logoColor=white" alt="Python"/>
-  <img src="https://img.shields.io/badge/algorithms-BFS%20%7C%20Dijkstra%20%7C%20DFS-red" alt="Algorithms"/>
-  <img src="https://img.shields.io/badge/MITRE%20ATT%26CK-Containers-orange?logo=shield" alt="MITRE"/>
-  <img src="https://img.shields.io/badge/tests-passed-brightgreen" alt="Tests"/>
-  <img src="https://img.shields.io/badge/license-MIT-green" alt="License"/>
-</p>
 
 <p align="center">
   A production-grade CLI tool that models Kubernetes clusters as directed graphs, applies classical graph algorithms to detect hidden multi-hop attack paths, and generates actionable <strong>Kill Chain Reports</strong> with MITRE ATT&CK mapping, adversary attack simulations, and cluster security scorecards.
@@ -22,7 +18,7 @@
 
 ---
 
-## ✨ Feature Highlights
+## Feature Highlights
 
 | Category | Features |
 |---|---|
@@ -51,8 +47,8 @@
 
 ```bash
 # Clone and enter
-git clone https://github.com/yourusername/k8s-attack-visualizer.git
-cd k8s-attack-visualizer
+git clone https://github.com/Mayur404/KubeRunner.git
+cd KubeRunner
 
 # Set up environment
 python -m venv venv
@@ -73,6 +69,9 @@ python main.py
 <p align="center">
   <img src="docs/cli_dashboard.png" alt="CLI Dashboard" width="700"/>
 </p>
+<p align="center">
+  <img src="docs/cli1.png" alt="Kill Chain Report" width="700"/>
+</p>
 
 KubeRunner features a **Target Control Center** — a premium terminal-based dashboard that eliminates the need for complex CLI flags. Just run `python main.py` and manage your entire security pipeline:
 
@@ -83,9 +82,7 @@ KubeRunner features a **Target Control Center** — a premium terminal-based das
 
 ---
 
-## 🎨 Premium Visualizer (Cyberpunk SOC Mode)
-
-The HTML visualizer has been redesigned from the ground up with a **Military-Grade Security Operations Center (SOC)** aesthetic:
+##  Premium Visualizer (Cyberpunk SOC Mode)
 
 - **Visuals:** Scanline overlays, glitch animations, and a hexagonal grid background.
 - **Typography:** Orbitron and JetBrains Mono for a high-tech technical feel.
@@ -95,6 +92,11 @@ The HTML visualizer has been redesigned from the ground up with a **Military-Gra
 ### 📸 Visualizer Preview
 <p align="center">
   <img src="docs/visualization.png" alt="Cyberpunk SOC Visualizer" width="800"/>
+</p>
+
+##  Kill Chain Report PDF
+<p align="center">
+  <img src="docs/pdf.png" alt="Kill Chain Report PDF" width="800"/>
 </p>
 
 ---
@@ -131,7 +133,7 @@ The tool operates as a **4-stage pipeline**:
 ## 📂 Project Structure
 
 ```
-k8s-attack-visualizer/
+kuberunner/
 │
 ├── main.py                   # CLI entry point — 16 flags, orchestrates pipeline
 ├── ingestor.py               # Data loading from JSON / kubectl + CVE enrichment
@@ -300,7 +302,7 @@ Generates coloured CLI output matching the hackathon sample format, plus a profe
 | 7. Remediation | MITRE Mitigations | 15 prioritised security actions |
 | 8. Namespace | Cross-NS Audit | Segmentation violations between namespaces |
 
-**Sample output format (matches hackathon spec):**
+**Sample output format:**
 ```
 !!! WARNING: Attack Path Detected
 User 'Internet:public-internet' can reach 'Database:production-db' via:
@@ -498,13 +500,3 @@ kubernetes>=30.1.0 # Live cluster client (optional)
 ```
 
 ---
-
-## 📜 License
-
-[MIT](LICENSE) — use it, extend it, ship it.
-
----
-
-<p align="center">
-  <em>"Security is not about preventing every possible attack — it is about making every attack path visible."</em>
-</p>

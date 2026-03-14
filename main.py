@@ -67,7 +67,7 @@ BANNER = f"""
 ██║  ██╗╚██████╔╝██████╔╝███████╗██║  ██║╚██████╔╝██║ ╚████║██║ ╚████║███████╗██║  ██║
 ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝{Style.RESET_ALL}
 
-{Fore.CYAN}{Style.BRIGHT}► KubeRunner Attack Path Visualizer v2.0{Style.RESET_ALL}
+{Fore.CYAN}{Style.BRIGHT}► KubeRunner Attack Path Visualizer{Style.RESET_ALL}
 {Fore.WHITE}  Graph-Based Security Analysis for Cloud-Native Infrastructure
   Algorithms: BFS | Dijkstra | DFS | PageRank | Centrality
   Framework:  MITRE ATT&CK for Containers{Style.RESET_ALL}
